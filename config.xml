@@ -119,6 +119,10 @@
             <requires profile="ContainerHost-SelfInstall"/>
             <requires profile="Ceph-base"/>
         </profile>
+        <profile name="Ceph-Vagrant" description="Ceph for Container Host, Vagrant" arch="x86_64">
+            <requires profile="ContainerHost-Vagrant"/>
+            <requires profile="Ceph-base"/>
+        </profile>
     </profiles>
     <preferences profiles="kvm-and-xen_x86_64">
         <version>16.0.0</version>
