@@ -1,0 +1,13 @@
+[Unit]
+Description=Project Working Title (Cthulhu PoC)
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/usr/share/cthulhu
+ExecStart=/usr/share/cthulhu/cthulhu
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

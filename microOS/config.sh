@@ -173,6 +173,10 @@ EOF
         chown -R vagrant /home/vagrant
 fi
 
+if [[ "$kiwi_profiles" == *"Ceph"* ]]; then
+  suseInsertService cthulhu
+fi
+
 # Not compatible with set -e
 baseCleanMount || true
 
