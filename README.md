@@ -33,7 +33,7 @@ USAGE
 
 Once the image is up and running, the web server can be found at
 
-  http://<image-ip>:5000
+  `http://<image-ip>:5000`
 
 
 LICENSE
