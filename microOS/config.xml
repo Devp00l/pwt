@@ -582,6 +582,9 @@
         <package name="chrony"/>
         <package name="tuned"/>
         <package name="python3-Flask"/>
+        <package name="python3-pip"/>
+        <package name="python3-aiofiles"/>
+        <package name="python3-requests"/>
         <archive name="cthulhu.tar"/>
     </packages>
 

@@ -174,6 +174,7 @@ EOF
 fi
 
 if [[ "$kiwi_profiles" == *"Ceph"* ]]; then
+  pip install fastapi uvicorn
   suseInsertService cthulhu
 fi
 
