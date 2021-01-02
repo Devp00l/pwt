@@ -247,6 +247,9 @@ def do_obtain_inventory(gstate: GlobalState) -> None:
     gstate.state = State.INVENTORY_START
     # _write_state(gstate) # don't save state, always call on restart
 
+    res = _get(gstate, "orchestrator/status", {}, True)
+    print("--- orchestrator status: " + str(res))
+
     host: str = "localhost"  # this should be programatically obtained
     ep: str = f"host/{host}/inventory"
     res = _get(gstate, ep, {}, True)
@@ -254,8 +257,6 @@ def do_obtain_inventory(gstate: GlobalState) -> None:
     gstate.inventory = res
 
     gstate.state = State.INVENTORY_WAIT  # wait for user input
-
-
 
 
 def do_authentication(gstate: GlobalState) -> None:
@@ -336,6 +337,12 @@ def do_bootstrap(gstate: GlobalState) -> None:
         gstate.password = dashboard_info["password"]
         
         _write_state(gstate)
+
+        # XXX: nasty hack
+        # let system settle a bit
+        
+        import time
+        time.sleep(10)
 
     except Exception as e:
         gstate.state = State.BOOTSTRAP_ERROR
