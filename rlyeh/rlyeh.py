@@ -265,11 +265,12 @@ def _calc_storage_solutions(
         raid0_size: float
         raid1_size: float
 
-    storage_total = sum([dev.size for dev in devices])
+    available_devices = [dev for dev in devices if dev.available]
+    storage_total = sum([dev.size for dev in available_devices])
     solution = Solution()
-    solution.can_raid0 = (len(devices) > 0)
+    solution.can_raid0 = (len(available_devices) > 0)
     solution.raid0_size = storage_total if solution.can_raid0 else 0
-    solution.can_raid1 = (len(devices) >= 2)
+    solution.can_raid1 = (len(available_devices) >= 2)
     solution.raid1_size = (storage_total / 2.0) if solution.can_raid1 else 0
 
     result: Dict[str, Any] = {
