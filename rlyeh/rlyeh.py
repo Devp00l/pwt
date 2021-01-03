@@ -100,42 +100,6 @@ def _write_state(gstate: GlobalState) -> None:
         json.dump(d, fd)   
 
 
-def do_start(gstate: GlobalState) -> None:
-    logger.info("----------> START <----------")
-
-    load_state(gstate)
-
-    logger.info("start bootstrapping")
-
-    if gstate.state == State.NONE:
-        do_bootstrap(gstate)
-
-    if gstate.state == State.BOOTSTRAP_END or \
-       gstate.state == State.AUTH_START:
-        do_authentication(gstate)
-
-    if gstate.state == State.AUTH_END or \
-       gstate.state == State.INVENTORY_START:
-        do_obtain_inventory(gstate)
-
-    return
-
-@app.on_event("startup")
-async def on_startup():
-
-    gstate = GlobalState()
-    app.state.executor = ThreadPoolExecutor()
-    app.state.gstate = gstate
-
-    loop = asyncio.get_event_loop()
-    loop.run_in_executor(app.state.executor, do_start, gstate)
-
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    app.state.executor.shutdown()
-
-
 def do_authenticated_stuff(gstate: GlobalState) -> None:
 
     url = f"https://{gstate.host}:{gstate.port}"
@@ -393,6 +357,44 @@ def do_bootstrap(gstate: GlobalState) -> None:
         gstate.state = State.BOOTSTRAP_ERROR
         _write_state(gstate)
         raise Exception(e)
+
+
+def do_start(gstate: GlobalState) -> None:
+    logger.info("----------> START <----------")
+
+    load_state(gstate)
+
+    logger.info("start bootstrapping")
+
+    if gstate.state == State.NONE:
+        do_bootstrap(gstate)
+
+    if gstate.state == State.BOOTSTRAP_END or \
+       gstate.state == State.AUTH_START:
+        do_authentication(gstate)
+
+    if gstate.state == State.AUTH_END or \
+       gstate.state == State.INVENTORY_START:
+        do_obtain_inventory(gstate)
+
+    return
+
+
+@app.on_event("startup")
+async def on_startup():
+
+    gstate = GlobalState()
+    app.state.executor = ThreadPoolExecutor()
+    app.state.gstate = gstate
+
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(app.state.executor, do_start, gstate)
+
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    app.state.executor.shutdown()
+
 
 
 @api.get("/status")
