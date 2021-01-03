@@ -390,11 +390,33 @@ def do_bootstrap(gstate: GlobalState) -> None:
         raise Exception(e)
 
 
+# -------------- second phase / solution selection --------------
+#
+# user has selected the storage solution, prepare osds and create pools.
+#
+def do_select_solution(gstate: GlobalState, solution_name: str) -> None:
+    print("===> do solution: " + solution_name)
+
+    pool_size: int = 1 if solution_name == "raid0" else 2
+
+    gstate.state = State.INVENTORY_END
+    _write_state(gstate)
+
+    do_solution(gstate, pool_size)
 
 
+def do_solution(gstate: GlobalState, poolsize: int) -> None:
+
+    _create_osds(gstate)
+    _create_pools(gstate, poolsize)
 
 
+def _create_osds(gstate: GlobalState) -> None:
+    pass
 
+
+def _create_pools(gstate: GlobalState, poolsize: int) -> None:
+    pass
 
 
 async def run_in_background(func: Callable, *args: Any) -> None:
@@ -445,6 +467,7 @@ async def accept_solution(solution: SolutionAcceptItem):
        (solution.name != "raid0" and solution.name != "raid1"):
         raise HTTPException(400, "solution not provided or not recognized")
 
+    await run_in_background(do_solution, gstate, solution.name)
     return 0
 
 
