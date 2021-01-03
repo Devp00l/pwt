@@ -43,6 +43,7 @@ interface StatusReply {
 }
 
 interface SolutionItem {
+  name: string;
   label: string;
   available: boolean;
   size: number;
@@ -184,11 +185,13 @@ export class BootstrapComponent implements OnInit {
     });
     this.solutions = {
       raid0: {
+        name: "raid0",
         label: "RAID 0",
         available: inventory.solution.can_raid0,
         size: inventory.solution.raid0_size
       },
       raid1: {
+        name: "raid1",
         label: "RAID 1",
         available: inventory.solution.can_raid1,
         size: inventory.solution.raid1_size
@@ -242,7 +245,16 @@ export class BootstrapComponent implements OnInit {
   public acceptSolution(): void {
     if (!this.has_selected_solution) {
       return;
+    } else if (!this.selected_solution) {
+      throw new Error("expected to have a selected solution");
     }
+
+    const reply = { name: this.selected_solution.name };
+    this._http.post("/api/solution/accept", reply)
+    .subscribe({
+      next: (res) => console.log("solution accespt result: ", res),
+      error: (err) => console.log("solution accept error: ", err)
+    });
 
     // accept solution
   }

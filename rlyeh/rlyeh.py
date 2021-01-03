@@ -7,9 +7,10 @@ import logging
 import requests
 from enum import Enum
 from concurrent.futures.thread import ThreadPoolExecutor
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.staticfiles import StaticFiles
 from typing import List, Optional, Dict, Any
+from pydantic import BaseModel
 
 
 from cephadm import cephadm
@@ -65,6 +66,10 @@ class GlobalState:
         self.username = d["username"]
         self.password = d["password"]
         self.token = d["token"]
+
+
+class SolutionAcceptItem(BaseModel):
+    name: str
 
 
 app = FastAPI()
@@ -413,6 +418,18 @@ async def get_inventory():
     gstate: GlobalState = app.state.gstate
     inventory: Dict[str, Any] = gstate.inventory
     return inventory
+
+
+@api.post("/solution/accept")
+async def accept_solution(solution: SolutionAcceptItem):
+
+    gstate: GlobalState = app.state.gstate
+    logger.info("handle solution accept: " + solution.name)
+    if len(solution.name) == 0 or \
+       (solution.name != "raid0" and solution.name != "raid1"):
+        raise HTTPException(400, "solution not provided or not recognized")
+
+    return 0
 
 
 app.mount(
