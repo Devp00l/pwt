@@ -75,6 +75,7 @@ export class BootstrapComponent implements OnInit {
   public obtaining_inventory: boolean = false;
   public obtained_inventory: boolean = false;
   public inventory_devices: InventoryDevice[] = [];
+  public available_raw_size: number = 0;
   public solutions: {[id: string]: SolutionItem} = {};
   public selected_solution: SolutionItem|undefined = undefined;
   public has_selected_solution: boolean = false;
@@ -176,6 +177,11 @@ export class BootstrapComponent implements OnInit {
       console.log(" > dev: ", dev.path, " size: ", dev.size);
     });
     this.inventory_devices = [...inventory.devices];
+    this.inventory_devices.forEach( (dev: InventoryDevice) => {
+      if (dev.available) {
+        this.available_raw_size += dev.size;
+      }
+    });
     this.solutions = {
       raid0: {
         label: "RAID 0",
@@ -231,5 +237,13 @@ export class BootstrapComponent implements OnInit {
 
     this.has_selected_solution = true;
     this.selected_solution = this.solutions[selected];
+  }
+
+  public acceptSolution(): void {
+    if (!this.has_selected_solution) {
+      return;
+    }
+
+    // accept solution
   }
 }
