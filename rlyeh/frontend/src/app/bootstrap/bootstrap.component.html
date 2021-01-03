@@ -1,0 +1,74 @@
+<mat-card>
+
+  <div fxLayout="column" fxLayoutAlign="start start">
+    <div fxLayout="row" fxLayoutAlign="start center"
+        *ngFor="let name of statelst;">
+  
+      <span style="min-width: 10em"><strong>{{name}}</strong></span>
+      <span style="width: 20px"></span>
+      <span *ngIf="states[name].start && !states[name].end && !states[name].error">
+        running
+      </span>
+      <span *ngIf="states[name].start && states[name].end && !states[name].error">
+        finished
+      </span>
+      <span *ngIf="!states[name].start && !states[name].error">waiting...</span>
+      <span *ngIf="states[name].error">error!</span>
+
+    </div>
+  </div>
+
+</mat-card>
+
+<mat-vertical-stepper [selectedIndex]="current_state_idx">
+  <mat-step *ngFor="let name of statelst"
+      [state]="name"
+      [editable]="false"
+      [completed]="states[name].end">
+    <ng-template matStepLabel>
+      <span>{{states[name].label}}</span>
+    </ng-template>
+    <ng-container *ngIf="name === 'inventory'" [ngTemplateOutlet]="inventory">
+    </ng-container>
+    <ng-container
+        *ngIf="name === 'bootstrap' || name === 'auth'"
+        [ngTemplateOutlet]="loading">
+    </ng-container>
+  </mat-step>
+</mat-vertical-stepper>
+
+<ng-template #inventory>
+
+  <div fxLayout="row" fxLayout="start center">
+    <div fxLayout="column" fxLayoutAlign="center start">
+
+      <div fxLayout="row" fxLayoutAlign="start center"
+          *ngFor="let dev of inventory_devices">
+
+        <mat-icon>storage</mat-icon>
+        <span style="width: 20px"></span>
+        <span>{{dev.path}}</span>
+        <span style="width: 20px"></span>
+        <span>{{dev.sys_api.size  | bytesToSize}}</span>
+
+      </div>
+    </div>
+
+    <span style="width: 40px"></span>
+
+    <div fxLayout="column" fxLayoutAlign="center start">
+      <span>Policy</span>
+    </div>
+
+    <span style="width: 40px"></span>
+
+    <div fxLayout="column" fxLayoutAlign="center start">
+      <span>Results</span>
+    </div>
+  </div>
+
+</ng-template>
+
+<ng-template #loading>
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+</ng-template>
