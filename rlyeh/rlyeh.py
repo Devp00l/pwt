@@ -194,6 +194,32 @@ def _obtain_token(gstate: GlobalState) -> str:
     return res["token"]
 
 
+# -------------- initial phase --------------
+#
+# bootstrap cluster, authenticate with dashboard api, and obtain cluster
+# inventory.
+#
+def do_start(gstate: GlobalState) -> None:
+    logger.info("----------> START <----------")
+
+    load_state(gstate)
+
+    logger.info("start bootstrapping")
+
+    if gstate.state == State.NONE:
+        do_bootstrap(gstate)
+
+    if gstate.state == State.BOOTSTRAP_END or \
+       gstate.state == State.AUTH_START:
+        do_authentication(gstate)
+
+    if gstate.state == State.AUTH_END or \
+       gstate.state == State.INVENTORY_START:
+        do_obtain_inventory(gstate)
+
+    return
+
+
 def _change_bootstrap_password(gstate: GlobalState) -> str:
     new_passwd: str = "bootstrapPW"
     _payload: Dict[str, str] = {
@@ -364,25 +390,12 @@ def do_bootstrap(gstate: GlobalState) -> None:
         raise Exception(e)
 
 
-def do_start(gstate: GlobalState) -> None:
-    logger.info("----------> START <----------")
 
-    load_state(gstate)
 
-    logger.info("start bootstrapping")
 
-    if gstate.state == State.NONE:
-        do_bootstrap(gstate)
 
-    if gstate.state == State.BOOTSTRAP_END or \
-       gstate.state == State.AUTH_START:
-        do_authentication(gstate)
 
-    if gstate.state == State.AUTH_END or \
-       gstate.state == State.INVENTORY_START:
-        do_obtain_inventory(gstate)
 
-    return
 
 
 @app.on_event("startup")
