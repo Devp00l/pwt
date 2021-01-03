@@ -236,6 +236,49 @@ def _change_bootstrap_password(gstate: GlobalState) -> str:
     return new_passwd
 
 
+def _calc_storage_solutions(
+    inventory: Dict[str, Any]
+) -> Dict[str, Any]:
+
+    if "devices" not in inventory:
+        return {}
+
+    class Device:
+        available: bool
+        path: str
+        size: int
+        type: str
+        pass
+
+    devices: List[Device] = []
+    for device in inventory["devices"]:
+        dev = Device()
+        dev.available = device["available"]
+        dev.path = device["path"]
+        dev.size = device["sys_api"]["size"]
+        dev.type = device["human_readable_type"]
+        devices.append(dev)
+
+    class Solution:
+        can_raid0: bool
+        can_raid1: bool
+        raid0_size: float
+        raid1_size: float
+
+    storage_total = sum([dev.size for dev in devices])
+    solution = Solution()
+    solution.can_raid0 = (len(devices) > 0)
+    solution.raid0_size = storage_total if solution.can_raid0 else 0
+    solution.can_raid1 = (len(devices) >= 2)
+    solution.raid1_size = (storage_total / 2.0) if solution.can_raid1 else 0
+
+    result: Dict[str, Any] = {
+        "solution": solution.__dict__,
+        "devices": [d.__dict__ for d in devices]
+    }
+
+    return result
+
 
 def do_obtain_inventory(gstate: GlobalState) -> None:
 
@@ -254,7 +297,8 @@ def do_obtain_inventory(gstate: GlobalState) -> None:
     ep: str = f"host/{host}/inventory"
     res = _get(gstate, ep, {}, True)
     print("--- inventory: " + str(res))
-    gstate.inventory = res
+    gstate.inventory = _calc_storage_solutions(res)
+    print("--- solution: " + str(gstate.inventory))
 
     gstate.state = State.INVENTORY_WAIT  # wait for user input
 

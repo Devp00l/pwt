@@ -49,21 +49,32 @@
         <span style="width: 20px"></span>
         <span>{{dev.path}}</span>
         <span style="width: 20px"></span>
-        <span>{{dev.sys_api.size  | bytesToSize}}</span>
+        <span>{{dev.size  | bytesToSize}}</span>
 
       </div>
     </div>
 
     <span style="width: 40px"></span>
 
-    <div fxLayout="column" fxLayoutAlign="center start">
-      <span>Policy</span>
+    <div fxLayout="column" fxLayoutAlign="start start">
+      <mat-form-field>
+        <mat-label>Policy</mat-label>
+        <mat-select (selectionChange)="selectedSolution($event)">
+          <mat-option *ngFor="let solution of solutions|keyvalue"
+              [value]="solution.key"
+              [disabled]="!solution.value.available">
+            {{solution.value.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
 
     <span style="width: 40px"></span>
 
-    <div fxLayout="column" fxLayoutAlign="center start">
-      <span>Results</span>
+    <div fxLayout="column" fxLayoutAlign="start start">
+      <div *ngIf="has_selected_solution">
+        <span>{{selected_solution?.size | bytesToSize}}</span>
+      </div>
     </div>
   </div>
 

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { interval } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { MatSelectChange } from '@angular/material/select';
 
 interface BootstrapDashboardReply {
   host: string;
@@ -20,22 +21,31 @@ interface BootstrapResult {
 interface InventoryDevice {
   available: boolean;
   path: string;
-  human_readable_type: string;
-  device_id: string;
-  sys_api: {
-    size: number;
-  }
+  type: string;
+  size: number;
+}
+
+interface InventorySolution {
+  can_raid0: boolean;
+  can_raid1: boolean;
+  raid0_size: number;
+  raid1_size: number;
 }
 
 interface InventoryReply {
-  name: string;
-  addr: string;
+  solution: InventorySolution;
   devices: InventoryDevice[];
 }
 
 interface StatusReply {
   status: string;
   result?: BootstrapResult;
+}
+
+interface SolutionItem {
+  label: string;
+  available: boolean;
+  size: number;
 }
 
 
@@ -65,6 +75,9 @@ export class BootstrapComponent implements OnInit {
   public obtaining_inventory: boolean = false;
   public obtained_inventory: boolean = false;
   public inventory_devices: InventoryDevice[] = [];
+  public solutions: {[id: string]: SolutionItem} = {};
+  public selected_solution: SolutionItem|undefined = undefined;
+  public has_selected_solution: boolean = false;
 
   public constructor(
     private _http: HttpClient,
@@ -158,11 +171,23 @@ export class BootstrapComponent implements OnInit {
   }
 
   private _handleInventory(inventory: InventoryReply): void {
-    console.log("host: ", inventory.name, " addr: ", inventory.addr);
+    // console.log("host: ", inventory.name, " addr: ", inventory.addr);
     inventory.devices.forEach( (dev: InventoryDevice) => {
-      console.log(" > dev: ", dev.path, " size: ", dev.sys_api.size);
+      console.log(" > dev: ", dev.path, " size: ", dev.size);
     });
     this.inventory_devices = [...inventory.devices];
+    this.solutions = {
+      raid0: {
+        label: "RAID 0",
+        available: inventory.solution.can_raid0,
+        size: inventory.solution.raid0_size
+      },
+      raid1: {
+        label: "RAID 1",
+        available: inventory.solution.can_raid1,
+        size: inventory.solution.raid1_size
+      }
+    };
   }
 
   private _obtainInventory(): void {
@@ -192,4 +217,19 @@ export class BootstrapComponent implements OnInit {
     }
   }
 
+  public selectedSolution(event: MatSelectChange): void {
+    console.log("> ", event);
+    if (!event || !event.value || event.value === "") {
+      return;
+    }
+    const selected: string = event.value;
+
+    if (!(selected in this.solutions)) {
+      this.has_selected_solution = false;
+      return;
+    }
+
+    this.has_selected_solution = true;
+    this.selected_solution = this.solutions[selected];
+  }
 }
