@@ -9,7 +9,7 @@ from enum import Enum
 from concurrent.futures.thread import ThreadPoolExecutor
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.staticfiles import StaticFiles
-from typing import List, Optional, Dict, Any
+from typing import Callable, List, Optional, Dict, Any
 from pydantic import BaseModel
 
 
@@ -397,6 +397,10 @@ def do_bootstrap(gstate: GlobalState) -> None:
 
 
 
+async def run_in_background(func: Callable, *args: Any) -> None:
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(app.state.executor, func, *args)
+
 
 @app.on_event("startup")
 async def on_startup():
@@ -405,8 +409,7 @@ async def on_startup():
     app.state.executor = ThreadPoolExecutor()
     app.state.gstate = gstate
 
-    loop = asyncio.get_event_loop()
-    loop.run_in_executor(app.state.executor, do_start, gstate)
+    await run_in_background(do_start, gstate)
 
 
 @app.on_event("shutdown")
