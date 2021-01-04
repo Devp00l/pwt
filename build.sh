@@ -2,33 +2,49 @@
 
 set -xe
 
-# set up cthulhu archive
+build_name="${1:-pwt}"
+build=build/${build_name}
+
+# set up rlyeh
 #
-cthulhu_share=usr/share/cthulhu
-cthulhu_etc=etc/systemd/system
-cthulhu_build=build/cthulhu
-
-dist="https://github.com/jecluis/project-cthulhu-dist/archive/master.zip"
-
-mkdir build
-mkdir -p ${cthulhu_build}/${cthulhu_share}/{templates,static}
-mkdir -p ${cthulhu_build}/${cthulhu_etc}
-
-cp cthulhu/server/* ${cthulhu_build}/${cthulhu_share}
-tar -C ${cthulhu_build}/${cthulhu_share} -xvf cthulhu/dist.tar
-cp cthulhu/cthulhu.service ${cthulhu_build}/${cthulhu_etc}
-
-tar -C ${cthulhu_build} -cvf build/cthulhu.tar etc/ usr/
-
-# setup microos kiwi files
+# archive paths
 #
+backend_share=${build}/usr/share/rlyeh
+backend_dist=${backend_share}/frontend/dist
+backend_units=${build}/etc/systemd/system
 
-mkdir build/pwt
-cp microOS/config.{sh,xml} build/pwt/
-mv build/cthulhu.tar build/pwt
+backend_dist_srcdir=rlyeh/misc/dist
 
-mkdir build/{_out,_logs}
+if [[ ! -e "${backend_dist_srcdir}/cthulhu.tar" ]]; then
+    echo "missing rlyeh dist.tar"
+    exit 1
+fi
+
+mkdir -p ${build}
+mkdir -p ${backend_share}
+mkdir -p ${backend_units}
+
+cp rlyeh/{rlyeh,rlyeh.py} ${backend_share}
+cp -R rlyeh/cephadm ${backend_share}
+mkdir -p ${backend_share}/frontend/dist/cthulhu
+tar -C ${backend_dist} -xvf ${backend_dist_srcdir}/cthulhu.tar
+
+[[ ! -e "${backend_dist}/cthulhu" ]] && \
+    echo "missing cthulhu dist files" && \
+    exit 1
+
+cp -R rlyeh/misc/systemd/rlyeh.service ${backend_units}
+
+tar -C ${build} -cvf ${build}/rlyeh.tar etc/ usr/
+
+mkdir ${build} || true
+cp microOS/config.{sh,xml} ${build}/
+
+[[ -e ${build}/rlyeh.tar ]] || exit 1
+
+mkdir ${build}/{_out,_logs}
 sudo kiwi-ng --debug --profile=Ceph-Vagrant --type oem \
-  system build --description $(pwd)/build/pwt --target-dir $(pwd)/build/_out |\
-  tee $(pwd)/build/_logs/pwt-build.log
+  system build --description $(pwd)/${build} \
+  --target-dir $(pwd)/${build}/_out |\
+  tee $(pwd)/${build}/_logs/${build_name}-build.log
 

@@ -175,7 +175,7 @@ fi
 
 if [[ "$kiwi_profiles" == *"Ceph"* ]]; then
   pip install fastapi uvicorn
-  suseInsertService cthulhu
+  suseInsertService rlyeh
 fi
 
 # Not compatible with set -e
