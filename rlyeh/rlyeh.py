@@ -105,23 +105,6 @@ def _write_state(gstate: GlobalState) -> None:
         json.dump(d, fd)   
 
 
-def do_authenticated_stuff(gstate: GlobalState) -> None:
-
-    url = f"https://{gstate.host}:{gstate.port}"
-    _headers = {
-        "Authorization": f"Bearer {gstate.token}",
-        "Accept": "application/vnd.ceph.api.v1.0+json",
-        "Content-Type": "application/json"
-    }
-    req = requests.get(f"{url}/api/host", headers=_headers, verify=False)
-    print(req.json())
-    req = requests.get(f"{url}/api/host/localhost/devices", headers=_headers, verify=False)
-    print("-- devices >> " + str(req.json()))
-
-    req = requests.get(f"{url}/api/host/localhost/inventory", headers=_headers, verify=False)
-    print("-- inventory >> " + json.dumps(req.json(), indent=4))
-
-
 def _get_headers(
     gstate: GlobalState, _authenticated: bool
 ) -> Dict[str, Any]:
