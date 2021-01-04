@@ -1,0 +1,12 @@
+[Unit]
+Description=Project Working Title (Rlyeh PoC)
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/usr/share/rlyeh
+ExecStart=/usr/share/rlyeh/rlyeh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
