@@ -21,31 +21,32 @@
 
 </mat-card>
 
-<mat-vertical-stepper [selectedIndex]="current_state_idx">
-  <mat-step *ngFor="let name of statelst"
-      [state]="name"
-      [editable]="false"
-      [completed]="states[name].end">
-    <ng-template matStepLabel>
-      <span>{{states[name].label}}</span>
-    </ng-template>
-    <ng-container *ngIf="name === 'inventory'" [ngTemplateOutlet]="inventory">
-    </ng-container>
-    <ng-container *ngIf="name === 'bootstrap'">
-      <ng-container *ngIf="states[name].wait && !states[name].start"
-          [ngTemplateOutlet]="bootstrap_wait">
+<mat-card style="margin-top: 20px;">
+  <mat-vertical-stepper [selectedIndex]="current_state_idx">
+    <mat-step *ngFor="let name of statelst"
+        [state]="name"
+        [editable]="false"
+        [completed]="states[name].end">
+      <ng-template matStepLabel>
+        <span>{{states[name].label}}</span>
+      </ng-template>
+      <ng-container *ngIf="name === 'inventory'" [ngTemplateOutlet]="inventory">
       </ng-container>
-      <ng-container *ngIf="states[name].start && !states[name].end" 
+      <ng-container *ngIf="name === 'bootstrap'">
+        <ng-container *ngIf="states[name].wait && !states[name].start"
+            [ngTemplateOutlet]="bootstrap_wait">
+        </ng-container>
+        <ng-container *ngIf="states[name].start && !states[name].end" 
+            [ngTemplateOutlet]="loading">
+        </ng-container>
+      </ng-container>
+      <ng-container
+          *ngIf="name === 'auth' || name === 'provision'"
           [ngTemplateOutlet]="loading">
       </ng-container>
-    </ng-container>
-    <ng-container
-        *ngIf="name === 'auth' || name === 'provision'"
-        [ngTemplateOutlet]="loading">
-    </ng-container>
-  </mat-step>
-</mat-vertical-stepper>
-
+    </mat-step>
+  </mat-vertical-stepper>
+</mat-card>
 
 <ng-template #bootstrap_wait>
 
