@@ -66,11 +66,15 @@ interface State {
 })
 export class BootstrapComponent implements OnInit {
 
-  public statelst: string[] = [ "bootstrap", "auth", "inventory" ];
+  public statelst: string[] = [
+    "bootstrap", "auth", "inventory", "provision", "done"
+  ];
   public states: {[id: string]: State} = {
     bootstrap: {label: "Bootstrap", start: false, end: false, error: false},
     auth: {label: "Authentication", start: false, end: false, error: false},
-    inventory: {label: "Inventory", start: false, end: false, error: false}
+    inventory: {label: "Inventory", start: false, end: false, error: false},
+    provision: {label: "Provisioning", start: false, end: false, error: false},
+    done: {label: "Done", start: false, end: false, error: false },
   };
   public current_state_idx: number = 0;
   public obtaining_inventory: boolean = false;
@@ -80,6 +84,7 @@ export class BootstrapComponent implements OnInit {
   public solutions: {[id: string]: SolutionItem} = {};
   public selected_solution: SolutionItem|undefined = undefined;
   public has_selected_solution: boolean = false;
+  public submitting_solution: boolean = false;
 
   public constructor(
     private _http: HttpClient,
@@ -148,6 +153,15 @@ export class BootstrapComponent implements OnInit {
       this._markState("inventory", "start");
       if (state === "inventory_wait") {
         this._markState("inventory", "wait");
+      }
+    } else if (state.startsWith("provision")) {
+      this._markState("bootstrap", ["start", "end"]);
+      this._markState("auth", ["start", "end"]);
+      this._markState("inventory", ["start", "end"]);
+      this._markState("provision", "start");
+      if (state === "provision_end") {
+        this._markState("provision", "end");
+        this._markState("done", ["start", "end"]);
       }
     } else if (state === "NONE") {
       console.log("no state yet");      
@@ -249,10 +263,14 @@ export class BootstrapComponent implements OnInit {
       throw new Error("expected to have a selected solution");
     }
 
+    this.submitting_solution = true;
+
     const reply = { name: this.selected_solution.name };
     this._http.post("/api/solution/accept", reply)
     .subscribe({
-      next: (res) => console.log("solution accespt result: ", res),
+      next: (res) => {
+        console.log("solution accept result: ", res);
+      },
       error: (err) => console.log("solution accept error: ", err)
     });
 

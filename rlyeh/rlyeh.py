@@ -33,6 +33,9 @@ class State(Enum):
     INVENTORY_WAIT = 8
     INVENTORY_END = 9
     INVENTORY_ERROR = 10
+    PROVISION_START = 11
+    PROVISION_END = 12
+    PROVISION_ERROR = 13
 
 
 class GlobalState:
@@ -176,6 +179,41 @@ def _obtain_token(gstate: GlobalState) -> str:
 
     return res["token"]
 
+
+def _set_config(gstate: GlobalState, name: str, value: Any) -> None:
+
+    _opt = { "name": name, "value": [{"section": "global", "value": value }]}
+    try:
+        _post(gstate, "cluster_conf", _opt)
+    except Exception as e:
+        logger.error("error: " + str(e))
+        raise e
+
+
+def _wait_health_okay(gstate: GlobalState) -> None:
+
+    timeout = 300   # 5 minutes
+
+    import time
+    start = time.time()
+
+    while True:
+        now = time.time()
+        if now - start >= timeout:
+            logger.error("timeout reached waiting for health okay!")
+            gstate.state = State.PROVISION_ERROR
+            break
+
+        res = _get(gstate, "health/minimal", {})
+        if "health" not in res:
+            raise Exception("unexpected health format")
+
+        if res["health"]["status"] == "HEALTH_OK":
+            break
+
+        time.sleep(10)
+
+    pass
 
 # -------------- initial phase --------------
 #
@@ -385,16 +423,58 @@ def do_select_solution(gstate: GlobalState, solution_name: str) -> None:
     gstate.state = State.INVENTORY_END
     _write_state(gstate)
 
-    do_solution(gstate, pool_size)
+    do_provision(gstate, pool_size)
 
 
-def do_solution(gstate: GlobalState, poolsize: int) -> None:
+def do_provision(gstate: GlobalState, poolsize: int) -> None:
 
+    gstate.state = State.PROVISION_START
+    _write_state(gstate)
+
+    _setup_config(gstate, poolsize)
     _create_osds(gstate)
     _create_pools(gstate, poolsize)
 
+    gstate.state = State.PROVISION_END
+    _write_state(gstate)
+
+
+def _setup_config(gstate: GlobalState, poolsize: int) -> None:
+
+    if poolsize == 1:
+        _set_config(gstate, "mon_allow_pool_size_one", True)
+        _set_config(gstate, "mon_warn_on_pool_no_redundancy", False)
+
+    _set_config(gstate, "osd_pool_default_size", poolsize)
+    _set_config(gstate, "osd_pool_default_min_size", 1)
+
+    pass
+
 
 def _create_osds(gstate: GlobalState) -> None:
+
+    _drive_groups: List[Dict[str, Any]] = [
+        {
+            "service_type": "osd",
+            "service_id": "bootstrap-drive-group",
+            "host_pattern": "*",
+            "data_devices": {
+                "all": True
+            }
+        }
+    ]
+
+    _payload: Dict[str, Any] = {
+        "method": "drive_groups",
+        "data": _drive_groups,
+        "tracking_id": "cthulhuCreateOSD"
+    }
+
+    res = _post(gstate, "osd", _payload, True)
+    logger.info(res)
+
+    _wait_health_okay(gstate)
+
     pass
 
 
@@ -450,7 +530,7 @@ async def accept_solution(solution: SolutionAcceptItem):
        (solution.name != "raid0" and solution.name != "raid1"):
         raise HTTPException(400, "solution not provided or not recognized")
 
-    await run_in_background(do_solution, gstate, solution.name)
+    await run_in_background(do_provision, gstate, solution.name)
     return 0
 
 

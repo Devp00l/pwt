@@ -31,7 +31,7 @@
     <ng-container *ngIf="name === 'inventory'" [ngTemplateOutlet]="inventory">
     </ng-container>
     <ng-container
-        *ngIf="name === 'bootstrap' || name === 'auth'"
+        *ngIf="name === 'bootstrap' || name === 'auth' || name === 'provision'"
         [ngTemplateOutlet]="loading">
     </ng-container>
   </mat-step>
@@ -70,7 +70,8 @@
     <div fxLayout="column" fxLayoutAlign="start center">
       <mat-form-field appearance="fill">
         <mat-label>Policy</mat-label>
-        <mat-select (selectionChange)="selectedSolution($event)">
+        <mat-select (selectionChange)="selectedSolution($event)"
+            [disabled]="submitting_solution">
           <mat-option *ngFor="let solution of solutions|keyvalue"
               [value]="solution.key"
               [disabled]="!solution.value.available">
@@ -82,10 +83,13 @@
       <span style="height: 10px"></span>
 
       <button mat-stroked-button color="primary"
+          *ngIf="!submitting_solution"
           [disabled]="available_raw_size === 0 || !has_selected_solution"
           (click)="acceptSolution()">
         Accept
       </button>
+
+      <mat-spinner *ngIf="submitting_solution" [diameter]="20"></mat-spinner>
 
     </div>
 

@@ -3,9 +3,13 @@ import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({name: 'bytesToSize'})
 export class BytesToSizePipe implements PipeTransform {
 
-  public transform(value: number, unit?: string): string {
+  public transform(value: number|undefined, unit?: string): string {
 
     const units: string[] = [ 'B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB' ];
+
+    if (!value) {
+      return "0 B";
+    }
 
     let result: number = value;
     let idx: number = 0;
