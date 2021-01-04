@@ -12,7 +12,8 @@
       <span *ngIf="states[name].start && states[name].end && !states[name].error">
         finished
       </span>
-      <span *ngIf="!states[name].start && !states[name].error">waiting...</span>
+      <span *ngIf="!states[name].start && !states[name].error && !states[name].wait">waiting...</span>
+      <span *ngIf="states[name].wait && !states[name].error">waiting user...</span>
       <span *ngIf="states[name].error">error!</span>
 
     </div>
@@ -30,12 +31,37 @@
     </ng-template>
     <ng-container *ngIf="name === 'inventory'" [ngTemplateOutlet]="inventory">
     </ng-container>
+    <ng-container *ngIf="name === 'bootstrap'">
+      <ng-container *ngIf="states[name].wait && !states[name].start"
+          [ngTemplateOutlet]="bootstrap_wait">
+      </ng-container>
+      <ng-container *ngIf="states[name].start && !states[name].end" 
+          [ngTemplateOutlet]="loading">
+      </ng-container>
+    </ng-container>
     <ng-container
-        *ngIf="name === 'bootstrap' || name === 'auth' || name === 'provision'"
+        *ngIf="name === 'auth' || name === 'provision'"
         [ngTemplateOutlet]="loading">
     </ng-container>
   </mat-step>
 </mat-vertical-stepper>
+
+
+<ng-template #bootstrap_wait>
+
+  <div fxLayout="row" fxLayoutAlign="center center">
+    
+    <button mat-raised-button color="warn"
+        (click)="startBootstrap()"
+        *ngIf="!is_bootstrapping">
+      START
+    </button>
+    <mat-spinner *ngIf="is_bootstrapping" [diameter]="25"></mat-spinner>
+
+  </div>
+
+</ng-template>
+
 
 <ng-template #inventory>
 

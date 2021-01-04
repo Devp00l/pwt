@@ -67,9 +67,10 @@ interface State {
 export class BootstrapComponent implements OnInit {
 
   public statelst: string[] = [
-    "bootstrap", "auth", "inventory", "provision", "done"
+    "start", "bootstrap", "auth", "inventory", "provision", "done"
   ];
   public states: {[id: string]: State} = {
+    start: {label: "Starting Up", start: false, end: false, error: false},
     bootstrap: {label: "Bootstrap", start: false, end: false, error: false},
     auth: {label: "Authentication", start: false, end: false, error: false},
     inventory: {label: "Inventory", start: false, end: false, error: false},
@@ -85,6 +86,7 @@ export class BootstrapComponent implements OnInit {
   public selected_solution: SolutionItem|undefined = undefined;
   public has_selected_solution: boolean = false;
   public submitting_solution: boolean = false;
+  public is_bootstrapping: boolean = false;
 
   public constructor(
     private _http: HttpClient,
@@ -132,62 +134,83 @@ export class BootstrapComponent implements OnInit {
 
   private _statusOn(state: string): void {
 
-    if (state.startsWith("bootstrap")) {
-      this._markState("bootstrap", "start");
-      if (state === "bootstrap_end") {
+    console.log("> state name: ", state);
+
+    if (state === "none") {
+      this._markState("start", "start");
+    
+    } else if (state.startsWith("bootstrap")) {
+      this._markState("start", ["start", "end"]);
+      
+      if (state === "bootstrap_start") {
+        this._markState("bootstrap", "start");
+      } else if (state === "bootstrap_end") {
         this._markState("bootstrap", "end");
       } else if (state === "bootstrap_error") {
         this._markState("bootstrap", "error");
+      } else if (state === "bootstrap_wait") {
+        this._markState("bootstrap", "wait");
       }
+
     } else if (state.startsWith("auth")) {
+      this._markState("start", ["start", "end"]);
       this._markState("bootstrap", ["start", "end"]);
       this._markState("auth", "start");
+
       if (state === "auth_end") {
         this._markState("auth", "end");
       } else if (state === "auth_error") {
         this._markState("auth", "error");
       }
+
     } else if (state.startsWith("inventory")) {
+      this._markState("start", ["start", "end"]);
       this._markState("bootstrap", ["start", "end"]);
       this._markState("auth", ["start", "end"]);
       this._markState("inventory", "start");
+
       if (state === "inventory_wait") {
         this._markState("inventory", "wait");
       }
+
     } else if (state.startsWith("provision")) {
+      this._markState("start", ["start", "end"]);
       this._markState("bootstrap", ["start", "end"]);
       this._markState("auth", ["start", "end"]);
       this._markState("inventory", ["start", "end"]);
       this._markState("provision", "start");
+
       if (state === "provision_end") {
         this._markState("provision", "end");
         this._markState("done", ["start", "end"]);
       }
-    } else if (state === "NONE") {
-      console.log("no state yet");      
+
     } else {
       throw new Error("unknown state: " + state);
     }
 
     let i: number = 0;
+    let found: boolean = false;
     let has_error: number = -1;
     this.statelst.forEach( (name: string) => {
-      if (has_error >= 0) {
+      if (has_error >= 0 || found) {
         return;
       } else if (this.states[name].error) {
         has_error = i;
         return;
-      } else if (this.states[name].end) {
-        i += 1;
+      } else if (!this.states[name].end ||
+                 i === this.statelst.length - 1) {
+        found = true;
         return;
+      } else {
+        i++;
       }
     });
     console.log("current state: ", i);
-    this.current_state_idx = i-1;
+    this.current_state_idx = i;
   }
 
   private _handleInventory(inventory: InventoryReply): void {
-    // console.log("host: ", inventory.name, " addr: ", inventory.addr);
     inventory.devices.forEach( (dev: InventoryDevice) => {
       console.log(" > dev: ", dev.path, " size: ", dev.size);
     });
@@ -238,6 +261,16 @@ export class BootstrapComponent implements OnInit {
 
       this._obtainInventory();
     }
+  }
+
+  public startBootstrap(): void {
+    console.log("start bootstrap");
+    this.is_bootstrapping = true;
+
+    this._http.post("/api/bootstrap", {}).subscribe({
+      next: () => { console.log("bootstrapping"); },
+      error: (err) => { console.error("error bootstrapping: ", err); }
+    });
   }
 
   public selectedSolution(event: MatSelectChange): void {

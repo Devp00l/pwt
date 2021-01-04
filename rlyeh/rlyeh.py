@@ -23,19 +23,20 @@ logger = logging.getLogger(__name__)
 
 class State(Enum):
     NONE = 0
-    BOOTSTRAP_START = 1
-    BOOTSTRAP_END = 2
-    BOOTSTRAP_ERROR = 3
-    AUTH_START = 4
-    AUTH_END = 5
-    AUTH_ERROR = 6
-    INVENTORY_START = 7
-    INVENTORY_WAIT = 8
-    INVENTORY_END = 9
-    INVENTORY_ERROR = 10
-    PROVISION_START = 11
-    PROVISION_END = 12
-    PROVISION_ERROR = 13
+    BOOTSTRAP_WAIT = 1
+    BOOTSTRAP_START = 2
+    BOOTSTRAP_END = 3
+    BOOTSTRAP_ERROR = 4
+    AUTH_START = 5
+    AUTH_END = 6
+    AUTH_ERROR = 7
+    INVENTORY_START = 8
+    INVENTORY_WAIT = 9
+    INVENTORY_END = 10
+    INVENTORY_ERROR = 11
+    PROVISION_START = 12
+    PROVISION_END = 13
+    PROVISION_ERROR = 14
 
 
 class GlobalState:
@@ -223,11 +224,9 @@ def _wait_health_okay(gstate: GlobalState) -> None:
 def do_start(gstate: GlobalState) -> None:
     logger.info("----------> START <----------")
 
-    load_state(gstate)
-
     logger.info("start bootstrapping")
 
-    if gstate.state == State.NONE:
+    if gstate.state == State.BOOTSTRAP_WAIT:
         do_bootstrap(gstate)
 
     if gstate.state == State.BOOTSTRAP_END or \
@@ -491,10 +490,17 @@ async def run_in_background(func: Callable, *args: Any) -> None:
 async def on_startup():
 
     gstate = GlobalState()
+
+    load_state(gstate)
+
+    if gstate.state == State.NONE:
+        gstate.state = State.BOOTSTRAP_WAIT
+        _write_state(gstate)
+
     app.state.executor = ThreadPoolExecutor()
     app.state.gstate = gstate
 
-    await run_in_background(do_start, gstate)
+    # await run_in_background(do_start, gstate)
 
 
 @app.on_event("shutdown")
@@ -511,6 +517,20 @@ async def get_status():
     state_name: str = state.name
 
     return { "status": state_name }
+
+
+@api.post("/bootstrap")
+async def bootstrap():
+
+    gstate: GlobalState = app.state.gstate
+
+    if gstate.state != State.BOOTSTRAP_WAIT:
+        logger.info("bootstrap already going or finished")
+        raise HTTPException(409, "already bootstrapping or bootstrapped")
+
+    logger.info("start bootstrapping")
+    await run_in_background(do_start, gstate)
+
 
 
 @api.get("/inventory")
