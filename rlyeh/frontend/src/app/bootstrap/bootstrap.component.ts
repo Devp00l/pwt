@@ -183,7 +183,7 @@ export class BootstrapComponent implements OnInit {
       }
     });
     console.log("current state: ", i);
-    this.current_state_idx = i;
+    this.current_state_idx = i-1;
   }
 
   private _handleInventory(inventory: InventoryReply): void {
