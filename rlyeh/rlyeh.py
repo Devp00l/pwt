@@ -126,7 +126,7 @@ def _post(
     gstate: GlobalState,
     endpoint: str,
     _payload: Dict[str, Any],
-    _authenticated: bool = False
+    _authenticated: bool = True
 ) -> Dict[str, Any]:
 
     ep: str = _get_endpoint(gstate, endpoint)
@@ -145,7 +145,7 @@ def _get(
     gstate: GlobalState,
     endpoint: str,
     _parameters: Dict[str, Any],
-    _authenticated: bool = False
+    _authenticated: bool = True
 ) -> Dict[str, Any]:
 
     ep: str = _get_endpoint(gstate, endpoint)
