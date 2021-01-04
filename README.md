@@ -15,7 +15,9 @@ We have three main directories:
   1. microOS/, for microOS base files to build an image
   2. cthulhu/, for files required to run a flask server serving
      project-cthulhu (https://github.com/jecluis/project-cthulhu.git)
-  3. vagrant/, so the generated image can be used
+  3. rlyeh/, for a cephadm-backed backend and frontend that will deploy a
+     single-node ceph cluster.
+  4. vagrant/, so the generated image can be used
 
 
 BUILDING
@@ -23,9 +25,14 @@ BUILDING
 
 Building requires `kiwi-ng` to be available in the system.
 
-Running the 'build.sh' script will generate an image in `build/_out`. This
-script will, at some point, ask the user for the root password. This is
-because `kiwi-ng` requires root to work :shrug:
+Images can be built using the `build.sh` script. By default, the build will be
+named `pwt` and will be available in `build/pwt/`. The script takes an argument
+for a build name (e.g., `build.sh pwt-foo`). Images can be found in
+`build/<buildname>/_out`.
+
+The script should either be run as root, or the password will be requested at
+some point during execution. This is because `kiwi-ng` requires root to work
+:shrug:
 
 
 USAGE
@@ -33,7 +40,10 @@ USAGE
 
 Once the image is up and running, the web server can be found at
 
-  `http://<image-ip>:5000`
+  `http://<image-ip>:1337`
+
+If using the provided Vagrantfile, then it can also be found at the
+host's port 1337.
 
 
 LICENSE
