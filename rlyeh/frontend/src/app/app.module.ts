@@ -18,6 +18,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule } from '@angular/forms';
 import { StartupComponent } from './startup/startup.component';
+import { ChooseOperationComponent } from './startup/choose-operation/choose-operation.component';
+import { MatDividerModule } from '@angular/material/divider';
 
 
 @NgModule({
@@ -26,6 +28,7 @@ import { StartupComponent } from './startup/startup.component';
     BootstrapComponent,
     BytesToSizePipe,
     StartupComponent,
+    ChooseOperationComponent
   ],
   imports: [
     BrowserModule,
@@ -42,6 +45,7 @@ import { StartupComponent } from './startup/startup.component';
     MatFormFieldModule,
     MatSelectModule,
     ReactiveFormsModule,
+    MatDividerModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

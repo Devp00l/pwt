@@ -23,20 +23,21 @@ logger = logging.getLogger(__name__)
 
 class State(Enum):
     NONE = 0
-    BOOTSTRAP_WAIT = 1
-    BOOTSTRAP_START = 2
-    BOOTSTRAP_END = 3
-    BOOTSTRAP_ERROR = 4
-    AUTH_START = 5
-    AUTH_END = 6
-    AUTH_ERROR = 7
-    INVENTORY_START = 8
+    CHOOSE_OPERATION = 1
+    BOOTSTRAP_WAIT = 2
+    BOOTSTRAP_START = 3
+    BOOTSTRAP_END = 4
+    BOOTSTRAP_ERROR = 5
+    AUTH_START = 6
+    AUTH_END = 7
+    AUTH_ERROR = 8
     INVENTORY_WAIT = 9
-    INVENTORY_END = 10
-    INVENTORY_ERROR = 11
-    PROVISION_START = 12
-    PROVISION_END = 13
-    PROVISION_ERROR = 14
+    INVENTORY_START = 10
+    INVENTORY_END = 11
+    INVENTORY_ERROR = 12
+    PROVISION_START = 13
+    PROVISION_END = 14
+    PROVISION_ERROR = 15
 
 
 class GlobalState:
@@ -205,6 +206,11 @@ def _wait_health_okay(gstate: GlobalState) -> None:
             gstate.state = State.PROVISION_ERROR
             break
 
+        # for testing purposes only
+        res = _get(gstate, "task", {})
+        logger.info("===> tasks result: " + str(res))
+        print("-----> TASKS result: " + str(res))
+
         res = _get(gstate, "health/minimal", {})
         if "health" not in res:
             raise Exception("unexpected health format")
@@ -226,7 +232,7 @@ def do_start(gstate: GlobalState) -> None:
 
     logger.info("start bootstrapping")
 
-    if gstate.state == State.BOOTSTRAP_WAIT:
+    if gstate.state == State.CHOOSE_OPERATION:
         do_bootstrap(gstate)
 
     if gstate.state == State.BOOTSTRAP_END or \
@@ -486,6 +492,10 @@ async def run_in_background(func: Callable, *args: Any) -> None:
     loop.run_in_executor(app.state.executor, func, *args)
 
 
+# --------- ON STARTUP / SHUTDOWN EVENTS ----------
+#
+#
+
 @app.on_event("startup")
 async def on_startup():
 
@@ -494,7 +504,7 @@ async def on_startup():
     load_state(gstate)
 
     if gstate.state == State.NONE:
-        gstate.state = State.BOOTSTRAP_WAIT
+        gstate.state = State.CHOOSE_OPERATION
         _write_state(gstate)
 
     app.state.executor = ThreadPoolExecutor()
@@ -519,12 +529,13 @@ async def get_status():
     return { "status": state_name }
 
 
+
 @api.post("/bootstrap")
 async def bootstrap():
 
     gstate: GlobalState = app.state.gstate
 
-    if gstate.state != State.BOOTSTRAP_WAIT:
+    if gstate.state != State.CHOOSE_OPERATION:
         logger.info("bootstrap already going or finished")
         raise HTTPException(409, "already bootstrapping or bootstrapped")
 

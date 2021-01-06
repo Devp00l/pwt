@@ -1,0 +1,61 @@
+<div class="choose-operation-container"
+    fxLayout="column" fxLayoutAlign="center center">
+
+  <div fxLayout="row" fxLayoutAlign="space-evenly center"
+      style="width: calc(100vw - 40px)">
+
+    <span></span>
+
+    <mat-card class="mat-elevation-z8 option-container-card"
+        routerLink="/bootstrap">
+
+      <div matCardTitle>
+        Create New Deployment
+        <div style="padding-top: 10px">
+          <mat-divider></mat-divider>
+        </div>
+      </div>
+
+      <div matCardContent
+          fxLayout="column" fxLayoutAlign="space-between center">
+      
+        <span style="height: 30px;"></span>
+        <img src="assets/flare.svg" style="width: 150px"/>
+        <span style="height: 30px"></span>
+        <span style="text-align: justify">
+          Setup will create a new deployment from scratch, configuring
+          this node as a standalone storage solution.
+        </span>
+      </div>
+    </mat-card>
+
+    <span></span>
+
+    <mat-card class="mat-elevation-z8 option-container-card-disabled">
+
+      <div matCardTitle>
+        Extend Existing Deployment
+        <div style="padding-top: 10px">
+          <mat-divider></mat-divider>
+        </div>
+      </div>
+
+      <div matCardContent
+          fxLayout="column" fxLayoutAlign="space-between center">
+      
+        <span style="height: 30px;"></span>
+        <img src="assets/settings_ethernet.svg" style="width: 150px"/>
+        <span style="height: 30px"></span>
+        <span style="text-align: justify">
+          Setup will search for existing deployments in the network and be
+          assimilated.
+        </span>
+      </div>
+
+    </mat-card>
+  
+    <span></span>
+
+  </div>
+
+</div>
