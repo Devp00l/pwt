@@ -1,0 +1,134 @@
+@import "~@angular/material/theming";
+
+@include mat-core();
+
+$suse-primary-palette: (
+    50: #30BA78,
+    100: #30BA78,
+    200: #30BA78,
+    300: #30BA78,
+    400: #30BA78,
+    500: #30BA78,
+    600: #30BA78,
+    700: #30BA78,
+    800: #30BA78,
+    900: #30BA78,
+    A100: #30BA78,
+    A200: #30BA78,
+    A400: #30BA78,
+    A700: #30BA78,
+    contrast: (
+        50: $dark-primary-text,
+        100: $dark-primary-text,
+        200: $dark-primary-text,
+        300: $dark-primary-text,
+        400: $light-primary-text,
+        500: $light-primary-text,
+        600: $light-primary-text,
+        700: $light-primary-text,
+        800: $light-primary-text,
+        900: $light-primary-text,
+        A100: $dark-primary-text,
+        A200: $dark-primary-text,
+        A400: $light-primary-text,
+        A700: $light-primary-text,
+    )
+);
+
+$suse-accent-palette: (
+    100: #0c322c,
+    500: #0c322c,
+    700: #0c322c,
+    contrast: (
+        50: $dark-primary-text,
+        100: $dark-primary-text,
+        200: $dark-primary-text,
+        300: $dark-primary-text,
+        400: $light-primary-text,
+        500: $light-primary-text,
+        600: $light-primary-text,
+        700: $light-primary-text,
+        800: $light-primary-text,
+        900: $light-primary-text,
+        A100: $dark-primary-text,
+        A200: $dark-primary-text,
+        A400: $light-primary-text,
+        A700: $light-primary-text,
+    )
+);
+
+$suse-warn-palette: (
+    100: #FF6A52,
+    500: #FF6A52,
+    700: #FF6A52,
+    contrast: (
+        50: $dark-primary-text,
+        100: $dark-primary-text,
+        200: $dark-primary-text,
+        300: $dark-primary-text,
+        400: $light-primary-text,
+        500: $light-primary-text,
+        600: $light-primary-text,
+        700: $light-primary-text,
+        800: $light-primary-text,
+        900: $light-primary-text,
+        A100: $dark-primary-text,
+        A200: $dark-primary-text,
+        A400: $light-primary-text,
+        A700: $light-primary-text,
+    )
+);
+
+$suse-primary: mat-palette($suse-primary-palette);
+$suse-accent: mat-palette($suse-accent-palette);
+$suse-warn: mat-palette($suse-warn-palette);
+
+// $suse-app-theme: mat-light-theme((
+//     color: (
+//         primary: $suse-primary,
+//         accent: $suse-accent,
+//         warn: $suse-warn
+//     )
+// ));
+
+$suse-theme-background: (
+    status-bar:                 map-get($mat-grey, 300),
+    app-bar:                    map-get($mat-grey, 100),
+    background:                 #0c322c,
+    hover:                      rgba(black, 0.04),
+    card:                       white,
+    dialog:                     white,
+    disabled-button:            rgba(black, 0.12),
+    raised-button:              $dark-focused,
+    selected-button:            map-get($mat-grey, 300),
+    selected-disabled-button:   map-get($mat-grey, 400),
+    disabled-button-toggle:     map-get($mat-grey, 200),
+    unselected-chip:            map-get($mat-grey, 300),
+    disabled-list-option:       map-get($mat-grey, 200),
+    tooltip:                    map-get($mat-grey, 700),
+);
+
+$suse-theme-foreground: $mat-light-theme-foreground;
+
+
+@function create-suse-theme($primary, $accent, $warn) {
+    @return (
+        primary: $primary,
+        accent: $accent,
+        warn: $warn,
+        is-dark: false,
+        foreground: $suse-theme-foreground,
+        background: $suse-theme-background
+    );
+}
+
+$suse-theme: create-suse-theme($suse-primary, $suse-accent, $suse-warn);
+
+
+// $background: map-get($suse-app-theme, background);
+// $background: map-merge($background, (background: $suse-app-background));
+// $suse-app-theme: map-merge($suse-app-theme, (background: $background));
+// $suse-app-theme: map-merge($suse-app-theme, (background: $suse-app-background));
+
+
+@include angular-material-theme($suse-theme);
