@@ -1,0 +1,10 @@
+<div class="startup-container" 
+    fxLayout="column" fxLayoutAlign="center center">
+
+  <div *ngFor="let msg of messages; let i = index">
+    <h1 *ngIf="cur_msg_idx === i" @fadeAnimation>{{msg}}</h1>
+  </div>
+  <span style="height: 20px"></span>
+  <mat-spinner *ngIf="!is_ready || !shown_all_messages"></mat-spinner>
+
+</div>

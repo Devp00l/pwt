@@ -17,13 +17,15 @@ import { BytesToSizePipe } from './byte-to-size.pipe';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule } from '@angular/forms';
+import { StartupComponent } from './startup/startup.component';
 
 
 @NgModule({
   declarations: [
     AppComponent,
     BootstrapComponent,
-    BytesToSizePipe
+    BytesToSizePipe,
+    StartupComponent,
   ],
   imports: [
     BrowserModule,
