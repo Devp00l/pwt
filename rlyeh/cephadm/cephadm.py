@@ -1344,7 +1344,7 @@ def infer_fsid(func):
     def _infer_fsid(ctx: CephadmContext):
         if ctx.args.fsid:
             logger.debug('Using specified fsid: %s' % ctx.args.fsid)
-            return func()
+            return func(ctx)
 
         fsids_set = set()
         daemon_list = list_daemons(ctx, detail=False)
@@ -1368,7 +1368,7 @@ def infer_fsid(func):
             ctx.args.fsid = fsids[0]
         else:
             raise Error('Cannot infer an fsid, one must be specified: %s' % fsids)
-        return func()
+        return func(ctx)
 
     return _infer_fsid
 
@@ -1381,7 +1381,7 @@ def infer_config(func):
     def _infer_config(ctx: CephadmContext):
         if ctx.args.config:
             logger.debug('Using specified config: %s' % ctx.args.config)
-            return func()
+            return func(ctx)
         config = None
         if ctx.args.fsid:
             name = ctx.args.name
@@ -1400,7 +1400,7 @@ def infer_config(func):
         elif os.path.exists(SHELL_DEFAULT_CONF):
             logger.debug('Using default config: %s' % SHELL_DEFAULT_CONF)
             ctx.args.config = SHELL_DEFAULT_CONF
-        return func()
+        return func(ctx)
 
     return _infer_config
 
@@ -1428,7 +1428,7 @@ def infer_image(func):
             ctx.args.image = get_last_local_ceph_image(ctx, ctx.container_path)
         if not ctx.args.image:
             ctx.args.image = _get_default_image(ctx)
-        return func()
+        return func(ctx)
 
     return _infer_image
 
