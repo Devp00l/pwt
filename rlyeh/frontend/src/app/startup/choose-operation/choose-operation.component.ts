@@ -1,4 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-choose-operation',
@@ -7,9 +9,32 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ChooseOperationComponent implements OnInit {
 
-  constructor() { }
+  public is_bootstrap_waiting: boolean = false;
 
-  ngOnInit(): void {
+  public constructor(
+    private _http: HttpClient,
+    private _router: Router
+  ) { }
+
+  public ngOnInit(): void { }
+
+
+  public chooseBootstrap(): void {
+
+    if (this.is_bootstrap_waiting) {
+      return;
+    }
+
+    this.is_bootstrap_waiting = true;
+    this._http.post("/api/bootstrap", {}).subscribe({
+      next: () => {
+        this._router.navigate(["/bootstrap"]);
+      },
+      error: (err) => {
+        this.is_bootstrap_waiting = false;
+        console.error("error bootstrapping: ", err);
+      }
+    });
+
   }
-
 }

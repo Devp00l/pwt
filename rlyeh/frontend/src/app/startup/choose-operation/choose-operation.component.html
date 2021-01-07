@@ -6,8 +6,10 @@
 
     <span></span>
 
-    <mat-card class="mat-elevation-z8 option-container-card"
-        routerLink="/bootstrap">
+    <mat-card class="mat-elevation-z8"
+        [class.option-container-card]="!is_bootstrap_waiting"
+        [class.option-container-card-disabled]="is_bootstrap_waiting"
+        (click)="chooseBootstrap()">
 
       <div matCardTitle>
         Create New Deployment
