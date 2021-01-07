@@ -38,6 +38,10 @@ class State(Enum):
     PROVISION_START = 13
     PROVISION_END = 14
     PROVISION_ERROR = 15
+    SERVICE_WAIT = 16
+    SERVICE_START = 17
+    SERVICE_END = 18
+    SERVICE_ERROR = 19
 
 
 class GlobalState:
@@ -75,6 +79,12 @@ class GlobalState:
 
 class SolutionAcceptItem(BaseModel):
     name: str
+
+
+class ServiceDescriptorItem(BaseModel):
+    with_nfs: bool
+    nfs_name: str
+    # with_iscsi: bool
 
 
 app = FastAPI()
@@ -438,10 +448,11 @@ def do_provision(gstate: GlobalState, poolsize: int) -> None:
 
     _setup_config(gstate, poolsize)
     _create_osds(gstate)
-    _create_pools(gstate, poolsize)
 
     gstate.state = State.PROVISION_END
     _write_state(gstate)
+
+    _service_prepare(gstate)
 
 
 def _setup_config(gstate: GlobalState, poolsize: int) -> None:
@@ -482,11 +493,25 @@ def _create_osds(gstate: GlobalState) -> None:
 
     pass
 
+# -------------- third phase / service creation --------------
+#
+# user has selected the storage solution, prepare osds and create pools.
+#
 
-def _create_pools(gstate: GlobalState, poolsize: int) -> None:
+def _service_prepare(gstate: GlobalState):
+    assert gstate.state == State.PROVISION_END or \
+           gstate.state == State.SERVICE_WAIT
+
+    gstate.state = State.SERVICE_WAIT
+    _write_state(gstate)
+
+
+def do_services(gstate: GlobalState, desc: ServiceDescriptorItem):
     pass
 
 
+# run something in the background, synchronously.
+#
 async def run_in_background(func: Callable, *args: Any) -> None:
     loop = asyncio.get_event_loop()
     loop.run_in_executor(app.state.executor, func, *args)
