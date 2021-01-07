@@ -20,6 +20,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { StartupComponent } from './startup/startup.component';
 import { ChooseOperationComponent } from './startup/choose-operation/choose-operation.component';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatInputModule } from '@angular/material/input';
 
 
 @NgModule({
@@ -46,6 +47,7 @@ import { MatDividerModule } from '@angular/material/divider';
     MatSelectModule,
     ReactiveFormsModule,
     MatDividerModule,
+    MatInputModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

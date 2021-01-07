@@ -67,14 +67,14 @@ interface State {
 export class BootstrapComponent implements OnInit {
 
   public statelst: string[] = [
-    "start", "bootstrap", "auth", "inventory", "provision", "done"
+    "bootstrap", "auth", "inventory", "provision", "service", "done"
   ];
   public states: {[id: string]: State} = {
-    start: {label: "Starting Up", start: false, end: false, error: false},
     bootstrap: {label: "Bootstrap", start: false, end: false, error: false},
     auth: {label: "Authentication", start: false, end: false, error: false},
     inventory: {label: "Inventory", start: false, end: false, error: false},
     provision: {label: "Provisioning", start: false, end: false, error: false},
+    service: {label: "Services", start: false, end: false, error: false},
     done: {label: "Done", start: false, end: false, error: false },
   };
   public current_state_idx: number = 0;
@@ -87,6 +87,10 @@ export class BootstrapComponent implements OnInit {
   public has_selected_solution: boolean = false;
   public submitting_solution: boolean = false;
   public is_bootstrapping: boolean = false;
+  public is_waiting_user: boolean = false;
+
+  public nfs_exports: string[] = [];
+
 
   public constructor(
     private _http: HttpClient,
@@ -137,10 +141,8 @@ export class BootstrapComponent implements OnInit {
     console.log("> state name: ", state);
 
     if (state === "none") {
-      this._markState("start", "start");
     
     } else if (state.startsWith("bootstrap")) {
-      this._markState("start", ["start", "end"]);
       
       if (state === "bootstrap_start") {
         this._markState("bootstrap", "start");
@@ -153,7 +155,6 @@ export class BootstrapComponent implements OnInit {
       }
 
     } else if (state.startsWith("auth")) {
-      this._markState("start", ["start", "end"]);
       this._markState("bootstrap", ["start", "end"]);
       this._markState("auth", "start");
 
@@ -164,17 +165,18 @@ export class BootstrapComponent implements OnInit {
       }
 
     } else if (state.startsWith("inventory")) {
-      this._markState("start", ["start", "end"]);
       this._markState("bootstrap", ["start", "end"]);
       this._markState("auth", ["start", "end"]);
       this._markState("inventory", "start");
 
       if (state === "inventory_wait") {
         this._markState("inventory", "wait");
+        this.is_waiting_user = true;
+      } else {
+        this.is_waiting_user = false;
       }
 
     } else if (state.startsWith("provision")) {
-      this._markState("start", ["start", "end"]);
       this._markState("bootstrap", ["start", "end"]);
       this._markState("auth", ["start", "end"]);
       this._markState("inventory", ["start", "end"]);
@@ -182,7 +184,19 @@ export class BootstrapComponent implements OnInit {
 
       if (state === "provision_end") {
         this._markState("provision", "end");
-        this._markState("done", ["start", "end"]);
+      }
+
+    } else if (state.startsWith("service")) {
+      this._markState("bootstrap", ["start", "end"]);
+      this._markState("auth", ["start", "end"]);
+      this._markState("inventory", ["start", "end"]);
+      this._markState("provision", ["start", "end"]);
+
+      this.is_waiting_user = (state === "service_wait");
+      if (state === "service_start") {
+        this._markState("service", "start");
+      } else if (state === "service_end") {
+        this._markState("service", ["start", "end"]);
       }
 
     } else {
@@ -308,5 +322,30 @@ export class BootstrapComponent implements OnInit {
     });
 
     // accept solution
+  }
+
+  public isNFSValidName(name: string): boolean {
+    const actual: string = name.trim();
+    if (actual === "" || this.nfs_exports.includes(actual)) {
+      return false;
+    }
+    return true;
+  }
+
+  public addNFSExport(name: string): void {
+    const actual: string = name.trim();
+    if (!this.isNFSValidName(actual)) {
+      return;
+    }
+    this.nfs_exports.push(actual);
+  }
+
+  public removeNFSExport(name: string): void {
+    const actual: string = name.trim();
+    if (!this.nfs_exports.includes(actual)) {
+      return;
+    }
+    const idx: number = this.nfs_exports.indexOf(actual);
+    this.nfs_exports.splice(idx, 1);
   }
 }

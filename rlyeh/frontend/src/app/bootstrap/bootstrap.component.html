@@ -6,14 +6,14 @@
   
       <span style="min-width: 10em"><strong>{{name}}</strong></span>
       <span style="width: 20px"></span>
-      <span *ngIf="states[name].start && !states[name].end && !states[name].error">
+      <span *ngIf="states[name].start && !states[name].end && !states[name].error && !is_waiting_user">
         running
       </span>
-      <span *ngIf="states[name].start && states[name].end && !states[name].error">
+      <span *ngIf="states[name].start && states[name].end && !states[name].error && !is_waiting_user">
         finished
       </span>
-      <span *ngIf="!states[name].start && !states[name].error && !states[name].wait">waiting...</span>
-      <span *ngIf="states[name].wait && !states[name].error">waiting user...</span>
+      <span *ngIf="!states[name].start && !states[name].error && !states[name].wait && !is_waiting_user">waiting...</span>
+      <span *ngIf="is_waiting_user">waiting user...</span>
       <span *ngIf="states[name].error">error!</span>
 
     </div>
@@ -43,6 +43,8 @@
       <ng-container
           *ngIf="name === 'auth' || name === 'provision'"
           [ngTemplateOutlet]="loading">
+      </ng-container>
+      <ng-container *ngIf="name === 'service'" [ngTemplateOutlet]="services">
       </ng-container>
     </mat-step>
   </mat-vertical-stepper>
@@ -127,6 +129,70 @@
       <div *ngIf="has_selected_solution">
         <span>Usable Storage: {{selected_solution?.size | bytesToSize}}</span>
       </div>
+    </div>
+  </div>
+
+</ng-template>
+
+<ng-template #services>
+
+  <div fxLayout="column" fxLayoutAlign="start start" style="width: 100%">
+    <div fxLayout="row" fxLayoutAlign="space-around start" style="width: 100%">
+
+      <div fxLayout="column" fxLayoutAlign="start start">
+        <h2 class="mat-h2">Network File System</h2>
+
+        <div fxLayout="column" fxLayoutAlign="start start"
+            *ngIf="nfs_exports.length > 0">
+      
+          <div fxLayout="row" fxLayoutAlign="start center"
+              *ngFor="let entry of nfs_exports">
+            <span style="min-width: 10em;">{{entry}}</span>
+            <span style="width: 10px"></span>
+            <button mat-icon-button (click)="removeNFSExport(entry)">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </div>
+          
+        </div>
+
+        <div fxLayout="row" fxLayoutAlign="start center">
+          <mat-form-field>
+            <mat-label>Name</mat-label>
+            <input matInput #nfsaddinput/>
+          </mat-form-field>
+          <span style="width: 10px"></span>
+          <button mat-stroked-button
+              (click)="addNFSExport(nfsaddinput.value);
+                      nfsaddinput.value = ''">
+            Add
+          </button>
+        </div>
+      </div>
+
+      <span></span>
+      
+      <div fxLayout="column" fxLayoutAlign="start start">
+        <h2 class="mat-h2">iSCSI</h2>
+
+        <div fxLayout="row" fxLayoutAlign="start center">
+          <mat-form-field>
+            <mat-label>Name</mat-label>
+            <input matInput [disabled]="true"/>
+          </mat-form-field>
+          <span style="width: 10px"></span>
+          <button mat-stroked-button [disabled]="true">Add</button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div fxLayout="row" fxLayoutAlign="center center" style="width: 100%">
+      <button mat-raised-button color="warn"
+          [disabled]="nfs_exports.length === 0">
+        Confirm
+      </button>
     </div>
   </div>
 
