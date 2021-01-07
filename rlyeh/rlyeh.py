@@ -82,9 +82,7 @@ class SolutionAcceptItem(BaseModel):
 
 
 class ServiceDescriptorItem(BaseModel):
-    with_nfs: bool
-    nfs_name: str
-    # with_iscsi: bool
+    nfs_name: List[str]
 
 
 app = FastAPI()
@@ -433,7 +431,10 @@ def do_bootstrap(gstate: GlobalState) -> None:
 def do_select_solution(gstate: GlobalState, solution_name: str) -> None:
     print("===> do solution: " + solution_name)
 
-    pool_size: int = 1 if solution_name == "raid0" else 2
+    if solution_name == "raid0":
+        pool_size = 1
+    else:
+        pool_size = 2
 
     gstate.state = State.INVENTORY_END
     _write_state(gstate)
@@ -507,6 +508,48 @@ def _service_prepare(gstate: GlobalState):
 
 
 def do_services(gstate: GlobalState, desc: ServiceDescriptorItem):
+    assert gstate.state == State.SERVICE_WAIT
+    assert len(desc.nfs_name) > 0
+
+    gstate.state = State.SERVICE_START
+    _write_state(gstate)
+
+    for name in desc.nfs_name:
+        create_ctx = cephadm.cephadm_init(
+            f"--verbose shell -- ceph fs volume create {name}".split()
+        )        
+        if not create_ctx:
+            logger.error(f"unable to create context for nfs {name}")
+            print("==> ERROR: unable to get ctx")
+            return None
+        
+        try:
+            cephadm.command_shell(create_ctx)
+        except Exception as e:
+            print("===> ERROR: " + str(e))
+            logger.error("---> ERROR: " + str(e))
+            return None
+
+    # XXX: nasty hack to work around some weird behavior with
+    # 'fs volume create' not starting/creating the mds daemons.
+    import time
+    time.sleep(10)
+
+    for name in desc.nfs_name:
+        apply_ctx = cephadm.cephadm_init(
+            f"--verbose shell -- ceph orch apply mds {name}".split()
+        )
+        assert apply_ctx
+        try:
+            cephadm.command_shell(apply_ctx)
+        except Exception as e:
+            print("===> ERROR: " + str(e))
+            logger.error("---> ERROR: " + str(e))
+            raise e
+
+    gstate.state = State.SERVICE_END
+    _write_state(gstate)
+
     pass
 
 
@@ -534,8 +577,6 @@ async def on_startup():
 
     app.state.executor = ThreadPoolExecutor()
     app.state.gstate = gstate
-
-    # await run_in_background(do_start, gstate)
 
 
 @app.on_event("shutdown")
@@ -588,6 +629,22 @@ async def accept_solution(solution: SolutionAcceptItem):
 
     await run_in_background(do_provision, gstate, solution.name)
     return 0
+
+
+@api.post("/services/setup")
+async def setup_services(descriptor: ServiceDescriptorItem):
+
+    gstate: GlobalState = app.state.gstate
+
+    if gstate.state != State.SERVICE_WAIT:
+        logger.info("not at service setup stage")
+        raise HTTPException(409, "not at service setup stage")
+
+    logger.info("handle services setup: " + str(descriptor.nfs_name))
+    if len(descriptor.nfs_name) == 0:
+        raise HTTPException(400, "nfs names not provided")
+
+    await run_in_background(do_services, gstate, descriptor)
 
 
 app.mount(

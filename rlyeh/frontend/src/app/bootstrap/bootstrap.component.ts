@@ -90,6 +90,10 @@ export class BootstrapComponent implements OnInit {
   public is_waiting_user: boolean = false;
 
   public nfs_exports: string[] = [];
+  public is_confirming_services: boolean = false;
+  public is_services_confirmed: boolean = false;
+  public is_creating_services: boolean = false;
+  public is_services_done: boolean = false;
 
 
   public constructor(
@@ -197,6 +201,7 @@ export class BootstrapComponent implements OnInit {
         this._markState("service", "start");
       } else if (state === "service_end") {
         this._markState("service", ["start", "end"]);
+        this.is_services_done = true;
       }
 
     } else {
@@ -347,5 +352,22 @@ export class BootstrapComponent implements OnInit {
     }
     const idx: number = this.nfs_exports.indexOf(actual);
     this.nfs_exports.splice(idx, 1);
+  }
+
+  public confirmServices(): void {
+    this.is_confirming_services = true;
+    const svc_desc = { nfs_name: this.nfs_exports };
+    this._http.post("/api/services/setup", svc_desc).subscribe({
+      next: (res) => {
+        this.is_services_confirmed = true;
+      },
+      error: (err) => {
+        console.error("error setting up services: ", err);
+      },
+      complete: () => {
+        this.is_confirming_services = false;
+      }
+    });
+
   }
 }

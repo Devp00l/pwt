@@ -13,7 +13,7 @@
         finished
       </span>
       <span *ngIf="!states[name].start && !states[name].error && !states[name].wait && !is_waiting_user">waiting...</span>
-      <span *ngIf="is_waiting_user">waiting user...</span>
+      <span *ngIf="!states[name].end && is_waiting_user">waiting user...</span>
       <span *ngIf="states[name].error">error!</span>
 
     </div>
@@ -136,7 +136,8 @@
 
 <ng-template #services>
 
-  <div fxLayout="column" fxLayoutAlign="start start" style="width: 100%">
+  <div fxLayout="column" fxLayoutAlign="start start" style="width: 100%"
+      *ngIf="!is_services_confirmed">
     <div fxLayout="row" fxLayoutAlign="space-around start" style="width: 100%">
 
       <div fxLayout="column" fxLayoutAlign="start start">
@@ -190,11 +191,20 @@
 
     <div fxLayout="row" fxLayoutAlign="center center" style="width: 100%">
       <button mat-raised-button color="warn"
-          [disabled]="nfs_exports.length === 0">
+          [disabled]="nfs_exports.length === 0"
+          (click)="confirmServices()"
+          *ngIf="!is_confirming_services && !is_services_confirmed">
         Confirm
       </button>
+      <mat-spinner [diameter]="20"
+          *ngIf="is_confirming_services && !is_services_confirmed">
+      </mat-spinner>
     </div>
   </div>
+
+  <ng-container *ngIf="is_services_confirmed && !is_services_done"
+      [ngTemplateOutlet]="loading">
+  </ng-container>
 
 </ng-template>
 

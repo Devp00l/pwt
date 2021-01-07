@@ -82,7 +82,8 @@ export class StartupComponent implements OnInit, AfterViewInit {
       this._router.navigate(["/choose-operation"]);
     } else if (
       name.startsWith("bootstrap") || name.startsWith("auth") ||
-      name.startsWith("inventory") || name.startsWith("provision")
+      name.startsWith("inventory") || name.startsWith("provision") ||
+      name.startsWith("service")
     ) {
       this._router.navigate(["/bootstrap"]);
     }
