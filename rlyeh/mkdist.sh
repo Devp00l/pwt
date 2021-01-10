@@ -4,7 +4,7 @@ set -xe
 
 [[ ! -e "frontend/dist" ]] && \
     pushd frontend && \
-    ng build && \
+    npx ng build && \
     popd
 
 [[ ! -e "frontend/dist/cthulhu/main.js" ]] && \
