@@ -431,15 +431,16 @@ def do_bootstrap(gstate: GlobalState) -> None:
 def do_select_solution(gstate: GlobalState, solution_name: str) -> None:
     print("===> do solution: " + solution_name)
 
-    if solution_name == "raid0":
-        pool_size = 1
-    else:
-        pool_size = 2
+    poolsize: int = 1
+    if solution_name == "raid1":
+        poolsize = 2
+    elif solution_name != "raid0":
+        raise Exception(f"unknown solution {solution_name}")
 
     gstate.state = State.INVENTORY_END
     _write_state(gstate)
 
-    do_provision(gstate, pool_size)
+    do_provision(gstate, poolsize)
 
 
 def do_provision(gstate: GlobalState, poolsize: int) -> None:
@@ -627,7 +628,7 @@ async def accept_solution(solution: SolutionAcceptItem):
        (solution.name != "raid0" and solution.name != "raid1"):
         raise HTTPException(400, "solution not provided or not recognized")
 
-    await run_in_background(do_provision, gstate, solution.name)
+    await run_in_background(do_select_solution, gstate, solution.name)
     return 0
 
 
