@@ -548,7 +548,40 @@ def do_services(gstate: GlobalState, desc: ServiceDescriptorItem):
             logger.error("---> ERROR: " + str(e))
             raise e
 
+    # XXX: wait for mds cluster to stabilize
+    time.sleep(10)
+
+    for name in desc.nfs_name:
+        nfs_create_ctx = cephadm.cephadm_init(
+            f"shell -- ceph nfs cluster create cephfs {name}-nfs".split()
+        )
+        assert nfs_create_ctx
+        try:
+            cephadm.command_shell(nfs_create_ctx)
+        except Exception as e:
+            print("===> ERROR: " + str(e))
+            logger.error("---> ERROR: " + str(e))
+            raise e
+
+    # XXX: wait for nfs cluster
+    time.sleep(10)
+
+    for name in desc.nfs_name:
+        nfs_export_ctx = cephadm.cephadm_init(
+            f"shell -- ceph nfs export create cephfs {name} {name}-nfs /cephfs".split()
+        )
+        assert nfs_export_ctx
+        try:
+            cephadm.command_shell(nfs_export_ctx)
+        except Exception as e:
+            print("===> ERROR: " + str(e))
+            logger.error("---> ERROR: " + str(e))
+            raise e
+
     gstate.state = State.SERVICE_END
+    _write_state(gstate)
+
+    gstate.state = State.READY
     _write_state(gstate)
 
     pass
