@@ -43,6 +43,8 @@ class State(Enum):
     SERVICE_END = 18
     SERVICE_ERROR = 19
 
+    READY = 20
+
 
 class GlobalState:
 
@@ -607,6 +609,10 @@ async def on_startup():
 
     if gstate.state == State.NONE:
         gstate.state = State.CHOOSE_OPERATION
+        _write_state(gstate)
+
+    elif gstate.state == State.SERVICE_END:
+        gstate.state = State.READY
         _write_state(gstate)
 
     app.state.executor = ThreadPoolExecutor()
