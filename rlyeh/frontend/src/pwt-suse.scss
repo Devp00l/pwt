@@ -3,20 +3,20 @@
 @include mat-core();
 
 $suse-primary-palette: (
-    50: #30BA78,
-    100: #30BA78,
-    200: #30BA78,
-    300: #30BA78,
+    50: #e8f5e9,
+    100: #c8e6c9,
+    200: #a5d6a7,
+    300: #81c784,
     400: #30BA78,
     500: #30BA78,
     600: #30BA78,
-    700: #30BA78,
-    800: #30BA78,
-    900: #30BA78,
-    A100: #30BA78,
-    A200: #30BA78,
-    A400: #30BA78,
-    A700: #30BA78,
+    700: #2e7d32,
+    800: #1b5e20,
+    900: #0c322c,
+    A100: #b9f6ca,
+    A200: #69f0ae,
+    A400: #00e676,
+    A700: #00c853,
     contrast: (
         50: $dark-primary-text,
         100: $dark-primary-text,
@@ -36,9 +36,9 @@ $suse-primary-palette: (
 );
 
 $suse-accent-palette: (
-    100: #0c322c,
+    100: #11574c,
     500: #0c322c,
-    700: #0c322c,
+    700: #09201d,
     contrast: (
         50: $dark-primary-text,
         100: $dark-primary-text,
