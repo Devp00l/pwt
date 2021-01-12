@@ -52,10 +52,7 @@ interface SolutionItem {
 
 interface State {
   label: string;
-  start: boolean;
-  wait?: boolean;
-  end: boolean;
-  error: boolean;
+  desc?: string;
 }
 
 
@@ -67,37 +64,62 @@ interface State {
 export class BootstrapComponent implements OnInit {
 
   public statelst: string[] = [
-    "bootstrap", "auth", "inventory", "provision", "service", "done"
+    "bootstrap", "inventory", "provision", "service", "ready"
   ];
   public states: {[id: string]: State} = {
-    bootstrap: {label: "Bootstrap", start: false, end: false, error: false},
-    auth: {label: "Authentication", start: false, end: false, error: false},
-    inventory: {label: "Inventory", start: false, end: false, error: false},
-    provision: {label: "Provisioning", start: false, end: false, error: false},
-    service: {label: "Services", start: false, end: false, error: false},
-    done: {label: "Done", start: false, end: false, error: false },
+    bootstrap: {
+      label: "Bootstrap", desc: "Starting minimal deployment"
+    },
+    inventory: {
+      label: "Inventory", desc: "Assessing system's storage devices"
+    },
+    provision: {
+      label: "Provisioning", desc: "Configuring and starting storage devices"
+    },
+    service: {
+      label: "Storage Access", desc: "Configuring how to access the storage"
+    },
+    ready: { label: "Ready" },
   };
-  public current_state_idx: number = 0;
-  public obtaining_inventory: boolean = false;
-  public obtained_inventory: boolean = false;
+  public current_step: number = -1;
+
+  // bootstrap
+  public is_bootstrapping: boolean = false;
+  public has_bootstrapped: boolean = false;
+
+  // inventory
+  public is_doing_inventory: boolean = false;
+  public has_inventory_ready: boolean = false;
+  public is_inventory_waiting_user: boolean = false;
+  public is_obtaining_inventory: boolean = false;
+  public has_obtained_inventory: boolean = false;
+  public has_selected_solution: boolean = false;
+  public is_submitting_solution: boolean = false;
+
   public inventory_devices: InventoryDevice[] = [];
   public available_raw_size: number = 0;
   public solutions: {[id: string]: SolutionItem} = {};
   public selected_solution: SolutionItem|undefined = undefined;
-  public has_selected_solution: boolean = false;
-  public submitting_solution: boolean = false;
-  public is_bootstrapping: boolean = false;
-  public is_waiting_user: boolean = false;
 
+  public is_provisioning: boolean = false;
+
+  // services
   public nfs_exports: string[] = [];
+
+  public is_doing_services: boolean = false;
+  public is_services_waiting_user: boolean = false;
   public is_confirming_services: boolean = false;
   public is_services_confirmed: boolean = false;
   public is_creating_services: boolean = false;
   public is_services_done: boolean = false;
 
+  // ready
+  public is_ready: boolean = false;
+
 
   public constructor(
     private _http: HttpClient,
+    private _router: Router
   ) { }
 
   public ngOnInit(): void {
@@ -105,128 +127,46 @@ export class BootstrapComponent implements OnInit {
   }
 
   private _obtainStatus(): void {
+
+    if (this.is_ready) {
+      return;
+    }
+
     this._http.get<StatusReply>("/api/status")
     .subscribe(this._handleStatus.bind(this));
     interval(5000).pipe(take(1)).subscribe(this._obtainStatus.bind(this));
-  }
-
-
-  private _markStageStage(state: State, stage: string): void {
-    if (stage === "start") {
-      state.start = true;
-    } else if (stage === "end") {
-      state.end = true;
-    } else if (stage === "error") {
-      state.error = true;
-    } else if (stage === "wait") {
-      state.wait = true;
-    } else {
-      throw new Error("unknown stage: " + stage);
-    }
-  }
-
-  private _markState(name: string, stage: string|string[]): void {
-    if (!(name in this.states)) {
-      throw new Error("unknown state: " + name);
-    }
-
-    if (typeof stage === "string") {
-      this._markStageStage(this.states[name], stage);
-    } else {
-      const lst: string[] = (stage as string[]);
-      lst.forEach( (s: string) => {
-        this._markStageStage(this.states[name], s);
-      });
-    }
   }
 
   private _statusOn(state: string): void {
 
     console.log("> state name: ", state);
 
-    if (state === "none") {
-    
-    } else if (state.startsWith("bootstrap")) {
-      
-      if (state === "bootstrap_start") {
-        this._markState("bootstrap", "start");
-      } else if (state === "bootstrap_end") {
-        this._markState("bootstrap", "end");
-      } else if (state === "bootstrap_error") {
-        this._markState("bootstrap", "error");
-      } else if (state === "bootstrap_wait") {
-        this._markState("bootstrap", "wait");
-      }
-
-    } else if (state.startsWith("auth")) {
-      this._markState("bootstrap", ["start", "end"]);
-      this._markState("auth", "start");
-
-      if (state === "auth_end") {
-        this._markState("auth", "end");
-      } else if (state === "auth_error") {
-        this._markState("auth", "error");
-      }
-
+    if (state.startsWith("bootstrap") || state.startsWith("auth")) {
+      this.current_step = this.statelst.indexOf("bootstrap");
     } else if (state.startsWith("inventory")) {
-      this._markState("bootstrap", ["start", "end"]);
-      this._markState("auth", ["start", "end"]);
-      this._markState("inventory", "start");
-
-      if (state === "inventory_wait") {
-        this._markState("inventory", "wait");
-        this.is_waiting_user = true;
-      } else {
-        this.is_waiting_user = false;
-      }
-
+      this.current_step = this.statelst.indexOf("inventory");
     } else if (state.startsWith("provision")) {
-      this._markState("bootstrap", ["start", "end"]);
-      this._markState("auth", ["start", "end"]);
-      this._markState("inventory", ["start", "end"]);
-      this._markState("provision", "start");
-
-      if (state === "provision_end") {
-        this._markState("provision", "end");
-      }
-
+      this.current_step = this.statelst.indexOf("provision");
     } else if (state.startsWith("service")) {
-      this._markState("bootstrap", ["start", "end"]);
-      this._markState("auth", ["start", "end"]);
-      this._markState("inventory", ["start", "end"]);
-      this._markState("provision", ["start", "end"]);
-
-      this.is_waiting_user = (state === "service_wait");
-      if (state === "service_start") {
-        this._markState("service", "start");
-      } else if (state === "service_end") {
-        this._markState("service", ["start", "end"]);
-        this.is_services_done = true;
-      }
-
+      this.current_step = this.statelst.indexOf("service");
+    } else if (state === "ready") {
+      this.current_step = this.statelst.indexOf("ready");
     } else {
-      throw new Error("unknown state: " + state);
+      this.current_step = -1;
     }
 
-    let i: number = 0;
-    let found: boolean = false;
-    let has_error: number = -1;
-    this.statelst.forEach( (name: string) => {
-      if (has_error >= 0 || found) {
-        return;
-      } else if (this.states[name].error) {
-        has_error = i;
-        return;
-      } else if (!this.states[name].end ||
-                 i === this.statelst.length - 1) {
-        found = true;
-        return;
-      } else {
-        i++;
+    this.is_bootstrapping =
+      (state.startsWith("bootstrap") || state.startsWith("auth"));
+    this.is_doing_inventory = (state.startsWith("inventory"));
+    this.is_provisioning = (state.startsWith("provision"));
+    this.is_doing_services = (state.startsWith("service"));
+    this.is_ready = (state === "ready");
+
+    if (state === "inventory_start" || state === "inventory_wait") {
+      if (!this.has_obtained_inventory && !this.is_obtaining_inventory) {
+        this.has_inventory_ready = true;
       }
-    });
-    console.log("current state: ", i);
-    this.current_state_idx = i;
+    }
   }
 
   private _handleInventory(inventory: InventoryReply): void {
@@ -253,19 +193,20 @@ export class BootstrapComponent implements OnInit {
         size: inventory.solution.raid1_size
       }
     };
+    this.is_inventory_waiting_user = true;
   }
 
   private _obtainInventory(): void {
-    this.obtaining_inventory = true;
+    this.is_obtaining_inventory = true;
     this._http.get<InventoryReply>("/api/inventory").subscribe({
       next: (res: InventoryReply) => {
         console.log(res);
-        this.obtained_inventory = true;
+        this.has_obtained_inventory = true;
         this._handleInventory(res);
       },
       error: (err) => {
         console.error("error obtaining inventory: ", err);
-        this.obtaining_inventory = false;
+        this.is_obtaining_inventory = false;
       }
     });
   }
@@ -275,9 +216,9 @@ export class BootstrapComponent implements OnInit {
     const status: string = reply.status.toLowerCase();
     this._statusOn(status);
 
-    if (!!this.states.inventory.wait && this.states.inventory.wait &&
-        !this.obtaining_inventory && !this.obtained_inventory) {
-
+    if (this.has_inventory_ready && !this.is_obtaining_inventory &&
+        !this.has_obtained_inventory
+    ) {
       this._obtainInventory();
     }
   }
@@ -315,7 +256,7 @@ export class BootstrapComponent implements OnInit {
       throw new Error("expected to have a selected solution");
     }
 
-    this.submitting_solution = true;
+    this.is_submitting_solution = true;
 
     const reply = { name: this.selected_solution.name };
     this._http.post("/api/solution/accept", reply)

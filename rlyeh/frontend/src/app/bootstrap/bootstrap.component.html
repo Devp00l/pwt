@@ -1,28 +1,27 @@
 <mat-card>
-  <mat-vertical-stepper [selectedIndex]="current_state_idx">
-    <mat-step *ngFor="let name of statelst"
+  <mat-vertical-stepper [selectedIndex]="current_step"
+      *ngIf="current_step >= 0">
+    <mat-step *ngFor="let name of statelst; let idx = index"
         [state]="name"
         [editable]="false"
-        [completed]="states[name].end">
+        [completed]="idx < current_step">
       <ng-template matStepLabel>
-        <span>{{states[name].label}}</span>
+        <div fxLayout="row" fxLayoutAlign="start center">
+          <span><strong>{{states[name].label}}</strong></span>
+          <span style="width: 20px"></span>
+          <span *ngIf="idx === current_step"><i>{{states[name].desc}}</i></span>
+        </div>
       </ng-template>
-      <ng-container *ngIf="name === 'inventory'" [ngTemplateOutlet]="inventory">
-      </ng-container>
-      <ng-container *ngIf="name === 'bootstrap'">
-        <ng-container *ngIf="states[name].wait && !states[name].start"
-            [ngTemplateOutlet]="bootstrap_wait">
-        </ng-container>
-        <ng-container *ngIf="states[name].start && !states[name].end" 
-            [ngTemplateOutlet]="loading">
-        </ng-container>
-      </ng-container>
+
       <ng-container
-          *ngIf="name === 'auth' || name === 'provision'"
+          *ngIf="is_bootstrapping || is_provisioning"
           [ngTemplateOutlet]="loading">
       </ng-container>
-      <ng-container *ngIf="name === 'service'" [ngTemplateOutlet]="services">
+      <ng-container *ngIf="is_doing_inventory" [ngTemplateOutlet]="inventory">
       </ng-container>
+      <ng-container *ngIf="is_doing_services" [ngTemplateOutlet]="services">
+      </ng-container>
+      <ng-container *ngIf="is_ready" [ngTemplateOutlet]="ready"></ng-container>
     </mat-step>
   </mat-vertical-stepper>
 </mat-card>
@@ -45,7 +44,11 @@
 
 <ng-template #inventory>
 
-  <div fxLayout="row" fxLayout="start center">
+  <ng-container *ngIf="!is_inventory_waiting_user && !has_obtained_inventory"
+      [ngTemplateOutlet]="loading">
+  </ng-container>
+
+  <div fxLayout="row" fxLayout="start center" *ngIf="is_inventory_waiting_user">
     <div fxLayout="column" fxLayoutAlign="center start">
 
       <div fxLayout="row" fxLayoutAlign="start center"
@@ -77,7 +80,7 @@
       <mat-form-field appearance="fill">
         <mat-label>Policy</mat-label>
         <mat-select (selectionChange)="selectedSolution($event)"
-            [disabled]="submitting_solution">
+            [disabled]="is_submitting_solution">
           <mat-option *ngFor="let solution of solutions|keyvalue"
               [value]="solution.key"
               [disabled]="!solution.value.available">
@@ -89,13 +92,13 @@
       <span style="height: 10px"></span>
 
       <button mat-stroked-button color="primary"
-          *ngIf="!submitting_solution"
+          *ngIf="!is_submitting_solution"
           [disabled]="available_raw_size === 0 || !has_selected_solution"
           (click)="acceptSolution()">
         Accept
       </button>
 
-      <mat-spinner *ngIf="submitting_solution" [diameter]="20"></mat-spinner>
+      <mat-spinner *ngIf="is_submitting_solution" [diameter]="20"></mat-spinner>
 
     </div>
 
@@ -187,4 +190,12 @@
 
 <ng-template #loading>
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+</ng-template>
+
+<ng-template #ready>
+  <div fxLayout="row" fxLayoutAlign="center center">
+    <button mat-raised-button color="primary">
+      Start
+    </button>
+  </div>
 </ng-template>
