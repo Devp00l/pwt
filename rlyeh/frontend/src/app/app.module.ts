@@ -21,6 +21,8 @@ import { StartupComponent } from './startup/startup.component';
 import { ChooseOperationComponent } from './startup/choose-operation/choose-operation.component';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatInputModule } from '@angular/material/input';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 
 @NgModule({
@@ -29,7 +31,8 @@ import { MatInputModule } from '@angular/material/input';
     BootstrapComponent,
     BytesToSizePipe,
     StartupComponent,
-    ChooseOperationComponent
+    ChooseOperationComponent,
+    DashboardComponent
   ],
   imports: [
     BrowserModule,
@@ -48,6 +51,7 @@ import { MatInputModule } from '@angular/material/input';
     ReactiveFormsModule,
     MatDividerModule,
     MatInputModule,
+    NgxChartsModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

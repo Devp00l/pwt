@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { interval } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { MatSelectChange } from '@angular/material/select';
+import { Router } from '@angular/router';
 
 interface BootstrapDashboardReply {
   host: string;
@@ -310,5 +311,9 @@ export class BootstrapComponent implements OnInit {
       }
     });
 
+  }
+
+  public goToDashboard(): void {
+    this._router.navigate(["/dashboard"]);
   }
 }

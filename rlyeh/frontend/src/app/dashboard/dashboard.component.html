@@ -1,0 +1,60 @@
+<div fxLayout="column" style="height: calc(100vh - 40px)">
+
+  <mat-card fxFlex="45%" style="position: relative;">
+    <mat-card-header>
+      <mat-card-title>Overview</mat-card-title>
+    </mat-card-header>
+
+    <div fxLayout="column" fxLayoutAlign="start start">
+
+      <h2 class="mat-h2">NFS</h2>
+      <mat-divider></mat-divider>
+      <div style="margin: 20px" fxLayout="column" fxLayoutAlign="start start">
+        <div fxLayout="row" fxLayoutAlign="start center"
+            *ngFor="let pool of nfs_exports">
+          <mat-icon>storage</mat-icon>
+          <span style="width: 20px"></span>
+          <span>{{pool}}</span>
+        </div>
+      </div>
+      
+    </div>
+
+
+  </mat-card>
+
+  <span fxFlex="10%"></span>
+
+  <!-- usage card -->
+
+  <mat-card fxFlex="45%" style="position: relative">
+
+    <mat-card-header>
+      <mat-card-title>Usage</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+
+      <ng-container [ngTemplateOutlet]="usage"></ng-container>
+
+    </mat-card-content>
+
+  </mat-card>
+
+</div>
+
+<ng-template #usage>
+
+  <div style="position: absolute; left: 0; right: 0; top: 10px; bottom: 30px">
+    <ngx-charts-pie-chart
+      [results]="usage_data"
+      [gradient]="true"
+      [legend]="false"
+      [legendPosition]="'below'"
+      [labels]="true"
+      [doughnut]="true"
+    >
+    </ngx-charts-pie-chart>
+  </div>
+
+</ng-template>

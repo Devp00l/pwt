@@ -48,6 +48,7 @@ export class StartupComponent implements OnInit, AfterViewInit {
   }
 
   public ngOnInit(): void {
+    // this._router.navigate(["/dashboard"]);
     this._status_observer.subscribe({
       next: (status: StatusReply) => {
         const name: string = status.status.toLowerCase();
@@ -86,8 +87,9 @@ export class StartupComponent implements OnInit, AfterViewInit {
       name.startsWith("service")
     ) {
       this._router.navigate(["/bootstrap"]);
+    } else if (name === "ready") {
+      this._router.navigate(["/dashboard"]);
     }
-
   }
 
 }
