@@ -4,12 +4,13 @@ set -xe
 
 [[ ! -e "frontend/dist" ]] && \
     pushd frontend && \
-    npx ng build && \
+    npx ng build --outputHashing=all --prod && \
     popd
 
-[[ ! -e "frontend/dist/cthulhu/main.js" ]] && \
-    echo "error: frontend not built!" && \
+if ! ls frontend/dist/cthulhu/main.*.js >&/dev/null ; then
+    echo "error: frontend not built!"
     exit 1
+fi
 
 tar -C frontend/dist -cvf misc/dist/cthulhu.tar cthulhu/
 
