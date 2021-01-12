@@ -87,6 +87,26 @@ class ServiceDescriptorItem(BaseModel):
     nfs_name: List[str]
 
 
+class ServiceNFSItem(BaseModel):
+    clusterid: str
+    export: str
+    accesstype: str
+
+
+class StatsNFSItem(BaseModel):
+    used: int
+    percent_used: float
+    avail: int
+    avail_raw: int
+
+
+class StatsItem(BaseModel):
+    total_avail_bytes: int
+    total_raw_bytes: int
+    total_used_raw_bytes: int
+    pools: Dict[str, StatsNFSItem]
+
+
 app = FastAPI()
 api = FastAPI()
 
@@ -618,12 +638,24 @@ async def on_startup():
     app.state.executor = ThreadPoolExecutor()
     app.state.gstate = gstate
 
+    await run_in_background(restart_state, gstate)
+
 
 @app.on_event("shutdown")
 async def on_shutdown():
     app.state.executor.shutdown()
 
 
+def restart_state(gstate: GlobalState):
+
+    if gstate.state == State.INVENTORY_WAIT or \
+       gstate.state == State.AUTH_END:
+        do_obtain_inventory(gstate)
+
+
+# -------- API Calls ----------
+#
+#
 
 @api.get("/status")
 async def get_status():
@@ -685,6 +717,72 @@ async def setup_services(descriptor: ServiceDescriptorItem):
         raise HTTPException(400, "nfs names not provided")
 
     await run_in_background(do_services, gstate, descriptor)
+
+
+@api.get("/services/nfs")
+async def get_services_nfs():
+    gstate: GlobalState = app.state.gstate
+
+    if gstate.state != State.READY:
+        logger.info("not at ready stage, can't provide service info")
+        raise HTTPException(409, "not ready")
+
+    raw_nfs = _get(gstate, "nfs-ganesha/export", {})
+    assert len(raw_nfs) > 0
+    exports: List[ServiceNFSItem] = []
+
+    for item in raw_nfs:
+        export: ServiceNFSItem = ServiceNFSItem(
+            clusterid=item["cluster_id"],
+            export=item["pseudo"],
+            accesstype=item["access_type"]
+        )
+        exports.append(export)
+
+    return exports
+
+
+@api.get("/df", response_model=StatsItem)
+async def get_df() -> StatsItem:
+    gstate: GlobalState = app.state.gstate
+
+    if gstate.state != State.READY:
+        raise HTTPException(412, "server not ready")
+
+    nfs = _get(gstate, "nfs-ganesha/export", {})
+    
+    nfs_poolname_to_clusterid = {}
+    cephfs_pools = []
+    for export in nfs:
+        fsname = export["fsal"]["fs_name"]
+        poolname = f"cephfs.{fsname}.data"
+        cephfs_pools.append(poolname)
+        nfs_poolname_to_clusterid[poolname] = export["cluster_id"]
+    
+    pools = _get(gstate, "pool", {"stats": True})
+
+    nfs_pools = {}
+    for pool in pools:
+        poolname = pool["pool_name"]
+        if cephfs_pools.count(poolname) > 0:
+            clusterid = nfs_poolname_to_clusterid[poolname]
+            nfs_pools[clusterid] = {
+                "used": pool["stats"]["bytes_used"]["latest"],
+                "percent_used": pool["stats"]["percent_used"]["latest"],
+                "avail": pool["stats"]["max_avail"]["latest"],
+                "avail_raw": pool["stats"]["avail_raw"]["latest"]
+            }
+
+    health = _get(gstate, "health/minimal", {})
+    df = health["df"]["stats"]
+    stats: StatsItem = StatsItem(
+        total_avail_bytes=df["total_avail_bytes"],
+        total_raw_bytes=df["total_bytes"],
+        total_used_raw_bytes=df["total_used_raw_bytes"],
+        pools=nfs_pools
+    )
+
+    return stats
 
 
 app.mount(
